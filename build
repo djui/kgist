@@ -1,0 +1,7 @@
+#!/bin/bash
+
+npm install express
+npm install hbs
+npm install dirty
+
+mkdir data
