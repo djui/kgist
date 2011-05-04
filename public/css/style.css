@@ -25,28 +25,29 @@ a:visited { color: #101010; }
 
 #container { padding: 50px 50px; }
 
-#gist_form { padding: 20px; width: 800px; background-color: #C7EAFB; border: 1px #CCCCCC solid; }
+#gist_form { margin-top: 10px; border-radius: 5px; padding: 5px 20px 20px 20px; width: 800px; background-color: #FAFAFA; border: 1px #CCCCCC solid; }
 label { margin-right: 5px; color: #909090; }
-#gist_form_name { width: 400px; }
-#gist_form_languages_wrapper { float: right; }
-#gist_form_code { margin: 10px 0 10px 0; width: 800px; height: 300px; font-family: ProggyCleanSZBP; font-smooth: never; font-size: 16px; }
+#gist_form_snippet_filename { width: 400px; }
+#gist_form_snippet_languages_wrapper { float: right; }
+#gist_form_snippet_code { margin: 10px 0 10px 0; width: 800px; height: 300px; font-family: ProggyCleanSZBP; font-smooth: never; font-size: 16px; }
 #gist_form_description { margin-bottom: 10px; width: 800px; display: block; }
 #gist_form_author { margin-right: 15px; }
 #gist_form_irc { margin-right: 15px; }
 #gist_form_expires { margin-right: 15px; }
 #gist_form_submit_wrapper { white-space: nowrap; float: right; }
 
-#gist { padding: 20px; width: 800px; background-color: #C7EAFB; border: 1px #CCCCCC solid; }
-#gist_name { margin-bottom: 10px; }
-#gist_description { padding-bottom: 10px; }
-#gist_language {; }
-#gist_code { margin: 15px 0 10px 0; padding: 0; width: 800px; min-height: 0px; border: 1px #CCCCCC solid; background-color: #FFFFFF; }
+#gist { margin-top: 10px; padding: 5px 20px 20px 20px; width: 800px; border-radius: 5px; background-color: #FAFAFA; border: 1px #CCCCCC solid; }
+#gist_description { }
 #gist_author { margin-bottom: 10px; }
-#gist_expires {; }
-#gist_exports { float: right;; }
-#gist_commands { float: right;; }
+#gist_snippet { border-radius: 5px; background: #EEEEEE; border: 1px #CCCCCC solid; margin: 20px 0; padding: 15px; }
+#gist_snippet_filename { margin-bottom: 10px; }
+#gist_snippet_language { }
+#gist_snippet_exports { float: right; }
+#gist_snippet_code { margin: 15px 0 10px 0; padding: 0; min-height: 0px; border: 1px #CCCCCC solid; background-color: #FFFFFF; }
+#gist_expires { }
+#gist_commands { float: right; }
 
-.highlight > pre { padding: 0; margin: 0; font-family: ProggyCleanSZBP; font-smooth: never; font-size: 16px;; }
+.highlight > pre { padding: 0; margin: 0; font-family: ProggyCleanSZBP; font-smooth: never; font-size: 16px; }
 
 .form_button { display: inline; }
 

@@ -123,7 +123,7 @@ function index(req, res) {
 
 function new_page(req, res) {
   var cookie_author = req.cookies.author;
-  res.render('new.html', {author: cookie_author});
+  res.render('gist_new.html', {author: cookie_author});
 }
 
 function create(req, res) {
@@ -165,7 +165,7 @@ function show(req, res) {
   if (!doc.author) snippetDoc.author = 'anonymous';
   snippetDoc.expires = relativeDate(snippet.calcExpireDate(doc.ctime, doc.expires));
   
-  res.render('snippet.html', {'snippet': snippetDoc});
+  res.render('gist_view.html', {'snippet': snippetDoc});
 }
 
 function show_raw(req, res) {
