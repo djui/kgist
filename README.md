@@ -1,1 +1,2 @@
-A gist/pasteboard web app for quickly sharing code snippets.
+A shameless clone of Github's Gist or pastebin.com as web app for quickly
+sharing code snippets.
