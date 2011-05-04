@@ -1,0 +1,51 @@
+<form action="/">
+  <input type="submit" value="&larr; Overview" />
+</form>
+
+<h1>Snippet</h1>
+<div id="gist">
+  <div id="gist_name">
+    <strong>Name:</strong> {{snippet/name}}
+    <!--
+    {{#if snippet/name}}
+      {{snippet/name}}
+    {{else}}
+      &#8212;
+    {{/if}}
+    -->
+  </div>
+  <div id="gist_description">
+    <strong>Description:</strong> {{snippet/description}}
+  </div>
+  <div id="gist_exports">
+    <a href="/{{snippet/id}}/raw">raw</a>
+    <a href="/{{snippet/id}}/download">download</a>
+    <!-- <a href="/{{snippet/id}}/history">history</a> -->
+    </div>
+  <div id="gist_language">
+    <strong>Language:</strong> {{snippet/language}}
+  </div>
+  <div id="gist_code">
+    {{{snippet/hl_code}}}
+  </div>
+  <div id="gist_commands">
+  <!--
+    <form action"{{snippet/id}}/comment">
+      <input type="submit" value="comment" disabled />
+    </form>
+    <form action"{{snippet/id}}/edit">
+      <input type="submit" value="edit" disabled />
+    </form>
+  -->
+    <form action"{{snippet/id}}">
+      <input type="hidden" name="_method" value="delete" />
+      <input type="submit" value="delete" />
+    </form>
+  </div>
+  <div id="gist_author">
+    <strong>Author:</strong> {{snippet/author}}
+  </div>
+  <div id="gist_expires">
+    <strong>Expires:</strong> {{snippet/expires}}
+  </div>
+</div>
