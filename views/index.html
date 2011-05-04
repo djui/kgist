@@ -1,7 +1,13 @@
-{{calendar}}
+<form action="/new">
+  <input type="submit" value="Create snippet &rarr;" />
+</form>
 
-<br/>
-
-Week: {{week}}<br/>
-User: {{user}}<br/>
-Place: {{place}}<br/>
+<h1>Recent</h1>
+{{#snippets}}
+<ul id="recent_list">
+  <li>
+    <a href="/{{id}}">{{name}}</a> by {{author}}<br/>
+    <span class="description">{{description}}</span>
+  </li>
+</ul>
+{{/snippets}}
