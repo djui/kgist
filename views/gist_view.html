@@ -3,51 +3,51 @@
 </form>
 
 <div id="gist">
-  <h1>Gist {{snippet/id}}</h1>
+  <h1>Gist {{gist/id}}</h1>
   <div id="gist_description">
-    <strong>Description:</strong> {{snippet/description}}
+    <strong>Description:</strong> {{gist/description}}
   </div>
   <div id="gist_author">
-    <strong>Author:</strong> {{snippet/author}}
+    <strong>Author:</strong> {{gist/author}}
   </div>
   <div id="gist_snippet">
     <div id="gist_snippet_filename">
-      <strong>File:</strong> {{snippet/filename}}
+      <strong>File:</strong> {{gist/filename}}
       <!--
-          {{#if snippet/filename}}
-            {{snippet/filename}}
+          {{#if gist/filename}}
+            {{gist/filename}}
           {{else}}
             &#8212;
           {{/if}}
         -->
     </div>
     <div id="gist_snippet_exports">
-      <a href="/{{snippet/id}}/raw">raw</a>
-      <a href="/{{snippet/id}}/download">download</a>
-      <!-- <a href="/{{snippet/id}}/history">history</a> -->
+      <a href="/{{gist/id}}/raw">raw</a>
+      <a href="/{{gist/id}}/download">download</a>
+      <!-- <a href="/{{gist/id}}/history">history</a> -->
     </div>
     <div id="gist_snippet_language">
-      <strong>Language:</strong> {{snippet/language}}
+      <strong>Language:</strong> {{gist/language}}
     </div>
     <div id="gist_snippet_code">
-      {{{snippet/hl_code}}}
+      {{{gist/hl_code}}}
     </div>
   </div>
   <div id="gist_commands">
   <!--
-    <form action"{{snippet/id}}/comment">
+    <form action"{{gist/id}}/comment">
       <input type="submit" value="comment" disabled />
     </form>
-    <form action"{{snippet/id}}/edit">
+    <form action"{{gist/id}}/edit">
       <input type="submit" value="edit" disabled />
     </form>
   -->
-    <form method="post" action"{{snippet/id}}">
+    <form method="post" action"{{gist/id}}">
       <input type="hidden" name="_method" value="delete" />
       <input type="submit" value="delete" />
     </form>
   </div>
   <div id="gist_expires">
-    <strong>Expires:</strong> {{snippet/expires}}
+    <strong>Expires:</strong> {{gist/expires}}
   </div>
 </div>

@@ -3,7 +3,7 @@ var fs       = require('fs'),
     hbs      = require('hbs'),
  // showdown = require('showdown').Showdown,
     jerk     = require('jerk'),
-    snippet  = require('./lib/snippet'),
+    gist     = require('./lib/gist'),
     pygments = require('./lib/pygments'),
     tests    = require('./tests/tests'),
     repl     = require('repl').start();
@@ -79,26 +79,28 @@ function NotFound(msg) {
 
 var ircBotOptions = { server:   IRC_SERVER
                     , channels: IRC_CHANNELS
-                    , nick:     'snippetbot'
+                    , nick:     'gistbot'
                     }
 
-function formatIrcMessage(author, snippetId) {
+function formatIrcMessage(author, gistId) {
   var from = author || 'Someone anonymously';
-  var url = snippet.url(snippetId);
+  var url = gist.url(gistId);
   
-  return from+' created a code snippet under '+url;
+  return from+' created a gist under '+url;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Starting / Stopping
 ////////////////////////////////////////////////////////////////////////////////
 
+if (process.argv[2] == "test") {
+  tests.run_tests();
+  process.exit();
+}
+
 server.listen(PORT, HOST, function () {
   console.log('Listening on http://' + HOST + ':' + PORT);
 });
-
-repl.context.run_tests = tests.run_tests;
-if (process.argv[2] == "test") tests.run_tests();
 
 var ircBot = jerk(function (j) {}).connect(ircBotOptions);
 //var ircChannel = ircBot.join('#tech');
@@ -117,8 +119,8 @@ repl.context.stop = stop;
 ////////////////////////////////////////////////////////////////////////////////
 
 function index(req, res) {
-  var docs = snippet.getRecent();
-  res.render('index.html', {'snippets': docs});
+  var docs = gist.getRecent();
+  res.render('index.html', {'gists': docs});
 }
 
 function new_page(req, res) {
@@ -139,18 +141,18 @@ function create(req, res) {
   pygments.highlight(doc.code, languageAlias, function (highlightedCode) {
     doc.hl_code = highlightedCode;
     
-    // Save the snippet
-    snippet.create(doc, function (err, snippetId) {
+    // Save the gist
+    gist.create(doc, function (err, gistId) {
       if (err) throw err;
       
       // Send irc message
       var ircChannel = assureIrcChannel(doc.irc);
       if (ircChannel) {
-        ircBot.say(ircChannel, formatIrcMessage(doc.author, snippetId));
+        ircBot.say(ircChannel, formatIrcMessage(doc.author, gistId));
       }
       
       res.cookie('author', doc.author, { maxAge: 900000 });
-      res.redirect('/'+snippetId);
+      res.redirect('/'+gistId);
     });
   });
 }
@@ -159,13 +161,13 @@ function show(req, res) {
   var doc = assertValidId(req, res);
   if (!doc) return;
   
-  var snippetDoc = snippet.clone(doc);
+  var gistDoc = gist.clone(doc);
   
-  if (!doc.description) snippetDoc.description = '-';
-  if (!doc.author) snippetDoc.author = 'anonymous';
-  snippetDoc.expires = relativeDate(snippet.calcExpireDate(doc.ctime, doc.expires));
+  if (!doc.description) gistDoc.description = '-';
+  if (!doc.author) gistDoc.author = 'anonymous';
+  gistDoc.expires = relativeDate(gist.calcExpireDate(doc.ctime, doc.expires));
   
-  res.render('gist_view.html', {'snippet': snippetDoc});
+  res.render('gist_view.html', {'gist': gistDoc});
 }
 
 function show_raw(req, res) {
@@ -185,34 +187,34 @@ function download(req, res) {
 }
 
 function destroy(req, res) {
-  var snippetId = req.params.id;
-  snippet.archive(snippetId, function (err) {
+  var gistId = req.params.id;
+  gist.archive(gistId, function (err) {
     res.redirect('home');
   });
 }
 
 function assertValidId(req, res) {
-  var snippetId = req.params.id;
+  var gistId = req.params.id;
   
-  if (!snippet.validId(snippetId)) { // Invalid ID
+  if (!gist.validId(gistId)) { // Invalid ID
     res.redirect('home');
     return undefined
   }
-  else if (!snippet.exists(snippetId)) { // Not found
+  else if (!gist.exists(gistId)) { // Not found
     res.redirect('home');
     return undefined
   }
-  else if (snippet.isArchived(snippetId)) { // Archived
+  else if (gist.isArchived(gistId)) { // Archived
     res.redirect('home');
     return undefined
   }
-  else if (snippet.hasExpired(snippetId)) { // Expired
-    snippet.archive(snippetId, function (err) {
+  else if (gist.hasExpired(gistId)) { // Expired
+    gist.archive(gistId, function (err) {
       if (err) throw err;
       res.redirect('home');
     });
     return undefined;
-  } else return snippet.get(snippetId);
+  } else return gist.get(gistId);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
