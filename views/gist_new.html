@@ -4,8 +4,8 @@
 
 <form id="gist_form" action="/" method="post">
   <h1>New gist</h1>
-  <input id="gist_form_description" type="text" name="description" value="" tabindex=1 placeholder="Description&hellip;" />
-  <input id="gist_form_snippet_file" type="text" name="filename" value="" placeholder="Name this file&hellip;" tabindex=2 />
+  <input id="gist_form_description" type="text" name="description" value="{{{gist/description}}}" tabindex=1 placeholder="Description&hellip;" />
+  <input id="gist_form_snippet_filename" type="text" name="filename" value="{{{gist/filename}}}" placeholder="Name this file&hellip;" tabindex=2 />
   <div id="gist_form_snippet_languages_wrapper">
     <label for="gist_form_snippet_languages">Language:</label>
     <select id="gist_form_snippet_languages" name="language" tabindex=3>
@@ -43,12 +43,11 @@
       <option value="XQuery">XQuery</option> 
       <option value="XSLT">XSLT</option> 
     </select>
-    <!-- <script>document.getElementById('gist_form_languages').selectedIndex = 6</script> -->
-    <script>$('#gist_form_snippet_languages').val('Erlang')</script>
+    <script>$('#gist_form_snippet_languages').val('{{{gist/language}}}')</script>
   </div>
-  <textarea id="gist_form_snippet_code" name="code" tabindex=4 autofocus required></textarea>
-  <input id="gist_form_author" type="text" name="author" value="{{author}}" tabindex=6 placeholder="Author&hellip;" />
-  <input id="gist_form_irc" type="text" name="irc" tabindex=7 placeholder="#channel&hellip;" />
+  <textarea id="gist_form_snippet_code" name="code" tabindex=4 autofocus required>{{{gist/code}}}</textarea>
+  <input id="gist_form_author" type="text" name="author" value="{{{gist/author}}}" tabindex=6 placeholder="Author&hellip;" />
+  <input id="gist_form_irc" type="text" name="irc" tabindex=7 value="{{{gist/irc}}}" placeholder="#channel&hellip;" />
   <label for="gist_form_expires">Expires:</label>
   <select id="gist_form_expires" name="expires" tabindex=8>
     <option value="" selected>Never</option>
@@ -58,8 +57,8 @@
     <option value="1m">1 month</option>
     <option value="1y">1 year</option>
   </select>
+  <script>$('#gist_form_expires').val('{{{gist/expires}}}')</script>
   <div id="gist_form_submit_wrapper">
-    {{{result}}}
     <input id="gist_form_submit" type="submit" value="Submit" tabindex=5 />
   </div>
   <script>
