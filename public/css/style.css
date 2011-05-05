@@ -53,3 +53,6 @@ label { margin-right: 5px; color: #909090; }
 
 #recent_list { list-style-type: none; padding: 0px; }
 .description { color: #999999; }
+
+.flash_error { min-width: 100px; width: 200px; margin: 20px auto; padding: 10px; text-align: center; color: #CC0000; font-weight: bold; background-color: #FFEEEE; border: 1px #FF0000 solid; border-radius: 3px; }
+.flash_info {  }

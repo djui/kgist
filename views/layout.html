@@ -16,6 +16,11 @@
     <h1 id="header">kGist &mdash; Code Snippets</h1>
     </header>
 
+    {{#messages}}
+    <div class="flash_error">{{error}}</div>
+    <div class="flash_info">{{info}}</div>
+    {{/messages}}
+
     {{{body}}}
 
     <footer>

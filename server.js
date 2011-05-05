@@ -130,9 +130,18 @@ function new_page(req, res) {
 
 function create(req, res) {
   var doc = req.body;
-  // No code, no snippet!
+  
+  // Sanitize
+  
+  // Has code?
   if (!doc.code) {
-    res.redirect('home');
+    res.render('gist_new.html', {'messages': [{'error': 'Missing code snippet'}]});
+    return;
+  }
+
+  // Filename valid?
+  if (!validFilename(doc.filename)) {
+    res.render('gist_new.html', {'messages': [{'error': 'Invalid filename'}]});
     return;
   }
   
@@ -225,6 +234,11 @@ function assureIrcChannel(channel) {
   if (/^[0-9a-zA-Z_-]+$/.test(channel)) return '#'+channel;
   else if (/^#[0-9a-zA-Z_-]+$/.test(channel)) return channel;
   else return undefined;
+}
+
+function validFilename(filename) {
+  if (/^[^\/?*:;{}\\]{1,256}$/.test(filename)) return true;
+  else return false;
 }
 
 function relativeDate(date) {
