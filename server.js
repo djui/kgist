@@ -135,16 +135,16 @@ function create(req, res) {
   var doc = req.body;
   
   // Sanitize
+  var messages = [];
   
   // Has code?
-  if (!doc.code) {
-    res.render('gist_new.html', {'messages': [{'error': 'Missing code snippet'}]});
-    return;
-  }
+  if (!doc.code) messages.push({'error': 'Missing code snippet'});
 
   // Filename valid?
-  if (!validFilename(doc.filename)) {
-    res.render('gist_new.html', {'messages': [{'error': 'Invalid filename'}]});
+  if (!validFilename(doc.filename)) messages.push({'error': 'Invalid filename'});
+
+  if (messages) {
+    res.render('gist_new.html', {'messages': messages});
     return;
   }
   
