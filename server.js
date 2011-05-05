@@ -112,6 +112,9 @@ function stop() {
   server.close();
   process.exit();
 }
+
+repl.context.migrate = gist.migrate;
+repl.context.run_tests = tests.run_tests;
 repl.context.stop = stop;
 
 ////////////////////////////////////////////////////////////////////////////////
