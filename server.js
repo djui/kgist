@@ -168,7 +168,7 @@ function show(req, res) {
   var doc = assertValidId(req, res);
   if (!doc) return;
   
-  var gistDoc = gist.clone(doc);
+  var gistDoc = gist.filter(doc);
   
   if (!doc.description) gistDoc.description = '-';
   if (!doc.author) gistDoc.author = 'anonymous';
