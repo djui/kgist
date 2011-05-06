@@ -26,7 +26,7 @@ wantedLanguages = [ "Bash"
                   , "Python 3"
                   , "reStructuredText"
                   , "Ruby"
-                  , "S"
+                  , "S" # R
                   , "Scala"
                   , "SQL"
                   , "TeX"
@@ -42,6 +42,10 @@ Lexers = []
 for l in UnfilteredLexers:
     if l[1] == ('basemake',): continue # Bugfix: we want unique keys (Makefile)
     if not l[0] in wantedLanguages: continue
+    if l[0] == 'S' and l[2][0] == '*.S': # Prioritize R over S
+        l[0] = 'R'
+        l[2][0] = '*.R'
+        l[2][1] = '*.S'
     Lexers.append(l)
 sortLambda = lambda x: locale.strxfrm(x[0].lower())
 sortedLexers = sorted(Lexers, key=sortLambda)
