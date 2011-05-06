@@ -22,6 +22,11 @@
 
 <div id="gist">
   <h1>Gist {{gist/id}}</h1>
+  <div class="gist_commands">
+    <form action"/{{gist/id}}/download">
+      <input type="submit" value="download" />
+    </form>
+  </div>
   <div id="gist_description">
     <strong>Description:</strong> {{gist/description}}
   </div>
@@ -41,7 +46,6 @@
     </div>
     <div id="gist_snippet_exports">
       <a href="/{{gist/id}}/raw">raw</a>
-      <a href="/{{gist/id}}/download">download</a>
       <!-- <a href="/{{gist/id}}/history">history</a> -->
     </div>
     <div id="gist_snippet_language">
@@ -51,7 +55,7 @@
       {{{gist/hl_code}}}
     </div>
   </div>
-  <div id="gist_commands">
+  <div class="gist_commands">
   <!--
     <form action"{{gist/id}}/comment">
       <input type="submit" value="comment" disabled />
