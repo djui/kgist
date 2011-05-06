@@ -43,7 +43,7 @@ label { margin-right: 5px; color: #909090; }
 #gist_snippet_filename { margin-bottom: 10px; }
 #gist_snippet_language { }
 #gist_snippet_exports { float: right; }
-#gist_snippet_code { margin: 15px 0 10px 0; padding: 0; min-height: 0px; border: 1px #CCCCCC solid; background-color: #FFFFFF; }
+#gist_snippet_code { margin: 15px 0 10px 0; padding: 0; min-height: 0px; overflow-x: auto; border: 1px #CCCCCC solid; background-color: #FFFFFF; line-height: 1.1; }
 #gist_expires { }
 #gist_commands { float: right; }
 
