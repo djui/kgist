@@ -11,10 +11,10 @@ body { color: #101010; font-family: Helvetica, sans-serif; font-size: 15px;
      }
 h1, h2, h3, h4, h5, h6 { padding: 0; margin: 12px 0 12px -2px; text-shadow: 1px 1px 1px #666666; }
 header { height: 80px; margin-bottom: 40px;
-         background: -moz-linear-gradient(100% 100% 90deg, #1F2842, #343F5F);
-         background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#343F5F), to(#1F2842));
-         background: -webkit-linear-gradient(#343F5F, #1F2842);
-         background: -o-linear-gradient(#1F2842, #343F5F);
+         background: -moz-linear-gradient(100% 100% 90deg, #1F2842, #455372);
+         background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#455372), to(#1F2842));
+         background: -webkit-linear-gradient(#455372, #1F2842);
+         background: -o-linear-gradient(#1F2842, #455372);
          border-radius: 10px;
        }
 
