@@ -93,13 +93,8 @@ function formatIrcMessage(author, gistId) {
 // Starting / Stopping
 ////////////////////////////////////////////////////////////////////////////////
 
-if (process.argv[2] == "test") {
-  tests.run_tests();
-  process.exit();
-}
-
 server.listen(PORT, HOST, function () {
-  console.log('Listening on http://' + HOST + ':' + PORT);
+  console.log('Listening at http://'+HOST+':'+PORT);
 });
 
 var ircBot = jerk(function (j) {}).connect(ircBotOptions);
