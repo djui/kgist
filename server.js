@@ -117,13 +117,13 @@ repl.context.stop = stop;
 ////////////////////////////////////////////////////////////////////////////////
 
 function index(req, res) {
-  var docs = gist.getRecent();
-  res.render('index.html', {'gists': docs});
+  res.redirect('/new');
 }
 
 function new_page(req, res) {
   var cookie_author = req.cookies.author;
-  res.render('gist_new.html', {author: cookie_author});
+  var docs = gist.getRecent();
+  res.render('gist_new.html', {'author': cookie_author, 'gists': docs});
 }
 
 function create(req, res) {
@@ -168,13 +168,14 @@ function show(req, res) {
   var doc = assertValidId(req, res);
   if (!doc) return;
   
+  var docs = gist.getRecent();
   var gistDoc = gist.filter(doc);
   
   if (!doc.description) gistDoc.description = '-';
   if (!doc.author) gistDoc.author = 'anonymous';
   gistDoc.expires = relativeDate(gist.calcExpireDate(doc.ctime, doc.expires));
   
-  res.render('gist_view.html', {'gist': gistDoc});
+  res.render('gist_view.html', {'gist': gistDoc, 'gists': docs});
 }
 
 function show_raw(req, res) {

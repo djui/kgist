@@ -47,12 +47,13 @@ label { margin-right: 5px; color: #909090; }
 #gist_snippet_code::-webkit-scrollbar { height: 6px; border-radius: 5px; }
 #gist_snippet_code::-webkit-scrollbar-thumb { background: #DDDDDD; border-radius: 5px; }
 #gist_expires { }
-#gist_commands { float: right; }
+.gist_commands { float: right; }
 
 .highlight > pre { padding: 0; margin: 0; font-family: ProggyCleanSZBP; font-smooth: never; font-size: 16px; }
 
 .form_button { display: inline; }
 
+#recent_gists { float: right; margin: 0 30px 0 0; width: 250px; }
 #recent_list { list-style-type: none; padding: 0px; }
 .description { color: #999999; }
 
