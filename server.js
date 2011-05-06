@@ -136,9 +136,9 @@ function create(req, res) {
   if (!doc.code) messages.push({'error': 'Missing code snippet'});
 
   // Filename valid?
-  if (!validFilename(doc.filename)) messages.push({'error': 'Invalid filename'});
+  if (doc.filename && !validFilename(doc.filename)) messages.push({'error': 'Invalid filename'});
 
-  if (messages) {
+  if (messages.length) {
     res.render('gist_new.html', {'messages': messages});
     return;
   }
