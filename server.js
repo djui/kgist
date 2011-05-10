@@ -300,7 +300,7 @@ function repo_clone(req, res) {
 ////////////////////////////////////////////////////////////////////////////////
 
 function serveGitObject(res, gistRepo, objectPath) {
-  var file = path.join(gistRepo, objectPath);
+  var file = path.join(REPO_PATH, gistRepo, objectPath);
   // FIXME Set connect's middleware module `static` to allow more listeners:
   // res.connection.setMaxListeners(100);
   // Git clone uses many parallel connections
