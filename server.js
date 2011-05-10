@@ -84,7 +84,7 @@ var ircBotOptions = { server:   IRC_SERVER
 
 function formatIrcMessage(author, gistId) {
   var from = author || 'Someone anonymously';
-  var url = gist.url(gistId);
+  var url = Gist.generateUrl(host, gistId);
   
   return from+' created a gist under '+url;
 }
@@ -92,6 +92,8 @@ function formatIrcMessage(author, gistId) {
 ////////////////////////////////////////////////////////////////////////////////
 // Starting / Stopping
 ////////////////////////////////////////////////////////////////////////////////
+
+var host_ip = ''; hostIP();
 
 server.listen(PORT, HOST, function () {
   console.log('Listening at http://'+HOST+':'+PORT);
@@ -267,4 +269,14 @@ function relativeDate(date) {
     else if (minutes) return Math.abs(minutes)+' minutes ago';
     else return 'less than a minute ago';
   }
+}
+
+function hostIP() {
+  var os = require('os');
+  var dns = require('dns');
+  
+  dns.resolve4(os.hostname(), function (err, IPs) {
+    if (err) throw err;
+    host_ip = IPs[0];
+  });
 }
