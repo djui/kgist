@@ -34,6 +34,12 @@ const PORT         = process.env.PORT || 8001;
 const DATA_PATH    = path.resolve('./data'); // absolute path
 const REPO_PATH    = DATA_PATH+'/git';
 const DB_PATH      = DATA_PATH+'/gist.db';
+
+path.existsSync(DATA_PATH) || fs.mkdirSync(DATA_PATH, 0755);
+path.existsSync(REPO_PATH) || fs.mkdirSync(REPO_PATH, 0755);
+path.existsSync(DB_PATH)   || fs.writeFileSync(DB_PATH, '');
+
+
 var server = express.createServer();
 server.configure(function () {
   var oneYear = 1*365*24*60*60*1000;
