@@ -17,7 +17,7 @@ var fs       = require('fs'),
  // showdown = require('showdown').Showdown,
     jerk     = require('jerk'),
     Gist     = require('./lib/gist'),
-    pygments = require('./lib/pygments'),
+    Pygments = require('./lib/pygments'),
     tests    = require('./tests/tests'),
     repl     = require('repl').start();
 
@@ -27,9 +27,13 @@ var fs       = require('fs'),
 
 const IRC_SERVER   = 'irc.hq.kred';
 const IRC_CHANNELS = ['#tech'];
+
 const HOST         = '0.0.0.0'; // INADDR_ANY
 const PORT         = process.env.PORT || 8001;
 
+const DATA_PATH    = path.resolve('./data'); // absolute path
+const REPO_PATH    = DATA_PATH+'/git';
+const DB_PATH      = DATA_PATH+'/gist.db';
 var server = express.createServer();
 server.configure(function () {
   var oneYear = 1*365*24*60*60*1000;
@@ -59,7 +63,7 @@ server.post('/',                create);
 server.del('/:gistId',          destroy);
 
 // For git clone
-server.get(new RegExp('('+Gist.HashPattern+'\.git)(\/.*)'), repo_clone);
+server.get(new RegExp('('+Gist.HASH_PATTERN+'\.git)(\/.*)'), repo_clone);
 
 // For testing
 server.get('/500', function (req, res) {
@@ -178,9 +182,10 @@ function create(req, res) {
   }
   
   // Highlight the code syntax
-  var languageAlias = pygments.getAlias(gist.language);
-  pygments.highlight(gist.code, languageAlias, function (highlightedCode) {
-    gist.hl_code = highlightedCode;
+  var languageAlias = Pygments.getAlias(gist.language);
+  Pygments.highlight(gist.code, languageAlias, function (err, hlCode) {
+    if (err) gist.hl_code = code;
+    else gist.hl_code = hlCode;
     
     // Save the gist
     Gist.create(gist, function (err, gistId) {
@@ -218,7 +223,7 @@ function show_raw(req, res) {
 
 function download(req, res) {
   var gist = req.gist;
-  var mime = pygments.getMime(gist.language);
+  var mime = Pygments.getMime(gist.language);
   
   res.send(gist.code, {'Content-Type': mime});
 }
