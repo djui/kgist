@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*
 FIXME Not really nice to have this asynchronize without event emitters: First...
 
  1. get host ip, then...
@@ -65,6 +65,7 @@ server.get('/500', function (req, res) {
   throw new Error('This is a 500 Error');
 });
 
+// For the rest
 server.get('/*', function (req, res) {
   throw new NotFound;
 });
@@ -186,7 +187,7 @@ function create(req, res) {
         ircBot.say(ircChannel, formatIrcMessage(gist.author, gistId));
       }
       
-      res.cookie('author', gist.author, { maxAge: 900000 });
+      res.cookie('author', gist.author, {maxAge: 900000});
       res.redirect('/'+gistId);
     });
   });
