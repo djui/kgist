@@ -86,6 +86,10 @@ server.param('gistId', function (req, res, next, id) {
 // Server error handling
 ////////////////////////////////////////////////////////////////////////////////
 
+process.on('uncaughtException', function (err) {
+  console.log('Caught exception: ' + err);
+});
+
 server.error(function (err, req, res, next) {
   if (err instanceof NotFound) {
     res.render('404.html', {status: 404, layout: false});
