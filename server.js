@@ -128,7 +128,7 @@ var ircBotOptions = { server:   IRC_SERVER
 
 function formatIrcMessage(author, gistId) {
   var from = author || 'Someone anonymously';
-  var url = Gist.generateUrl(host_ip, gistId);
+  var url = Gist.generateUrl(host_ip, PORT, gistId);
   
   return from+' created a gist under '+url;
 }
@@ -233,6 +233,7 @@ function show(req, res) {
   if (!gist0.description) gist.description = '-';
   if (!gist0.author) gist.author = 'anonymous';
   gist.expires = relativeDate(Gist.calcExpireDate(gist0.ctime, gist0.expires));
+  gist.http_clone_link = Gist.generateUrl(host_ip, PORT, gist0.id)+'.git';
   
   res.render('gist_view.html', {'gist': gist, 'gists': recentGists});
 }
