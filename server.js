@@ -18,6 +18,7 @@ var fs       = require('fs'),
     jerk     = require('jerk'),
     Gist     = require('./lib/gist'),
     Pygments = require('./lib/pygments'),
+    Git      = require('./lib/git'),
     tests    = require('./tests/tests'),
     repl     = require('repl').start();
 
@@ -195,17 +196,31 @@ function create(req, res) {
     else gist.hl_code = hlCode;
     
     // Save the gist
-    Gist.create(gist, function (err, gistId) {
-      if (err) throw err;
-      
-      // Send irc message
-      assertValidIrcChannel(gist.irc, function (err, channel) {
-        if (err) { /* TODO add to error messages on create page */ }
-        ircBot.say(ircChannel, formatIrcMessage(gist.author, gistId));
+    Gist.create(gist, function (err2, gistId) {
+      if (err2) throw err2;
+
+      // Create git repo
+      Git.init(gistId, REPO_PATH, function (err3) {
+        if (err3) throw err3;
+        
+        // Add gist to repo and commit it
+        // TODO Tricky, because '--bare' only accepts push's not commits
+        
+        // Update git repo server info
+        Git.updateServerInfo(path.join(REPO_PATH, gistId+'.git'), function (err4) {
+          if (err4) throw err4;
+          
+          // Send irc message
+          assertValidIrcChannel(gist.irc, function (err5, channel) {
+            if (err5) { /* TODO add to error messages on create page */ }
+            // TODO Implement to say in public
+            // ircBot.say(channel, formatIrcMessage(gist.author, gistId));
+          });
+        
+          res.cookie('author', gist.author, {maxAge: 900000});
+          res.redirect('/'+gistId);
+        });
       });
-      
-      res.cookie('author', gist.author, {maxAge: 900000});
-      res.redirect('/'+gistId);
     });
   });
 }
@@ -238,7 +253,13 @@ function download(req, res) {
 function destroy(req, res) {
   var gist = req.gist;
   Gist.archive(gist.id, function (err) {
-    res.redirect('home');
+    if (err) throw err;
+    
+    Git.remove(path.join(REPO_PATH, gist.id+',git'), function (err2) {
+      if (err) throw err;
+      
+      res.redirect('home');
+    });
   });
 }
 
