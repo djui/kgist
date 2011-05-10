@@ -127,7 +127,7 @@ var ircBotOptions = { server:   IRC_SERVER
 
 function formatIrcMessage(author, gistId) {
   var from = author || 'Someone anonymously';
-  var url = Gist.generateUrl(host, gistId);
+  var url = Gist.generateUrl(host_ip, gistId);
   
   return from+' created a gist under '+url;
 }
