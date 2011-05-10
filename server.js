@@ -57,6 +57,9 @@ server.get('/:gistId/download', download);
 server.post('/',                create);
 server.del('/:gistId',          destroy);
 
+// For git clone
+server.get(new RegExp('('+Gist.HashPattern+'\.git)(\/.*)'), repo_clone);
+
 // For testing
 server.get('/500', function (req, res) {
   throw new Error('This is a 500 Error');
