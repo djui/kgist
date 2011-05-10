@@ -180,7 +180,8 @@ function create(req, res) {
   // Has code?
   if (!gist.code) errors.push({'error': 'Missing code snippet'});
   // Filename valid?
-  if (gist.filename && !validFilename(gist.filename)) messages.push({'error': 'Invalid filename'});
+  if (gist.filename && !validFilename(gist.filename))
+    messages.push({'error': 'Invalid filename'});
 
   if (errors.length) {
     res.render('gist_new.html', {'messages': errors});
