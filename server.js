@@ -11,6 +11,7 @@ server listen.
 */
 
 var fs       = require('fs'),
+    path     = require('path'),
     express  = require('express'),
     hbs      = require('hbs'),
  // showdown = require('showdown').Showdown,
@@ -229,9 +230,48 @@ function destroy(req, res) {
   });
 }
 
+// Every time a repo changes, you need to run this command on your git repo
+// server side:
+//
+//     $ git update-server-info
+//
+// Then, on the client side, if you do a `git clone` git will try the following
+// fallback order to retreive the references:
+// 
+//     $ git clone http://127.0.0.1:8001/
+//     
+//     GET /info/refs?service=git-upload-pack
+//     GET /info/refs
+//     GET /HEAD
+function repo_clone(req, res) {
+  var gistRepo = req.params[0];
+  if (!Gist.validRepo(gistRepo))
+    new Error('Invalid gist repository');
+
+  var objectPath = req.params[1];
+  var service = req.query.service;
+  
+  switch (service) {
+  case 'git-receive-pack': // git push
+    throw new NotFound;
+  case 'git-upload-pack': // git clone
+    // throw new NotFound;
+  default: // git fallback
+    serveGitObject(res, gistRepo, objectPath);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
+
+function serveGitObject(res, gistRepo, objectPath) {
+  var file = path.join(gistRepo, objectPath);
+  // FIXME Set connect's middleware module `static` to allow more listeners:
+  // res.connection.setMaxListeners(100);
+  // Git clone uses many parallel connections
+  res.download(file);
+}
 
 function assertValidIrcChannel(channel, callback) {
   if (/^[0-9a-zA-Z_-]+$/.test(channel)) callback(undefined, '#'+channel);
