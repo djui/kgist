@@ -285,8 +285,8 @@ function serveGitObject(res, gistRepo, objectPath) {
 }
 
 function assertValidIrcChannel(channel, callback) {
-  if (/^[0-9a-zA-Z_-]+$/.test(channel)) callback(undefined, '#'+channel);
-  else if (/^#[0-9a-zA-Z_-]+$/.test(channel)) callback(undefined, channel);
+  if (/^[0-9a-zA-Z_-]+$/.test(channel)) callback(null, '#'+channel);
+  else if (/^#[0-9a-zA-Z_-]+$/.test(channel)) callback(null, channel);
   else callback(new Error('Invalid IRC channel'));
 }
 
