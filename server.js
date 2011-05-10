@@ -1,3 +1,15 @@
+/*******************************************************************************
+FIXME Not really nice to have this asynchronize without event emitters: First...
+
+ 1. get host ip, then...
+ 2. load db, then...
+ 3. start irc bot, then...
+ 4. start server listen
+
+Or have every start process emit and done event and when all are emitted, start
+server listen.
+*/
+
 var fs       = require('fs'),
     express  = require('express'),
     hbs      = require('hbs'),
