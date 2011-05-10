@@ -186,10 +186,10 @@ function create(req, res) {
       if (err) throw err;
       
       // Send irc message
-      var ircChannel = assureIrcChannel(gist.irc);
-      if (ircChannel) {
+      assertValidIrcChannel(gist.irc, function (err, channel) {
+        if (err) { /* TODO add to error messages on create page */ }
         ircBot.say(ircChannel, formatIrcMessage(gist.author, gistId));
-      }
+      });
       
       res.cookie('author', gist.author, {maxAge: 900000});
       res.redirect('/'+gistId);
@@ -233,10 +233,10 @@ function destroy(req, res) {
 // Helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-function assureIrcChannel(channel) {
-  if (/^[0-9a-zA-Z_-]+$/.test(channel)) return '#'+channel;
-  else if (/^#[0-9a-zA-Z_-]+$/.test(channel)) return channel;
-  else return undefined;
+function assertValidIrcChannel(channel, callback) {
+  if (/^[0-9a-zA-Z_-]+$/.test(channel)) callback(undefined, '#'+channel);
+  else if (/^#[0-9a-zA-Z_-]+$/.test(channel)) callback(undefined, channel);
+  else callback(new Error('Invalid IRC channel'));
 }
 
 function validFilename(filename) {
