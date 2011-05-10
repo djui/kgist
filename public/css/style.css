@@ -38,7 +38,8 @@ label { margin-right: 5px; color: #909090; }
 
 #gist { margin-top: 10px; padding: 5px 20px 20px 20px; width: 800px; border-radius: 5px; background-color: #FAFAFA; border: 1px #CCCCCC solid; }
 #gist_description { }
-#gist_author { margin-bottom: 10px; }
+#gist_author { }
+#gist_http_clone_link { margin-bottom: 10px; }
 #gist_snippet { border-radius: 5px; background: #EEEEEE; border: 1px #CCCCCC solid; margin: 20px 0; padding: 15px; }
 #gist_snippet_filename { margin-bottom: 10px; }
 #gist_snippet_language { }
