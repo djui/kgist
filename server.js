@@ -3,7 +3,7 @@ var fs       = require('fs'),
     hbs      = require('hbs'),
  // showdown = require('showdown').Showdown,
     jerk     = require('jerk'),
-    gist     = require('./lib/gist'),
+    Gist     = require('./lib/gist'),
     pygments = require('./lib/pygments'),
     tests    = require('./tests/tests'),
     repl     = require('repl').start();
@@ -35,15 +35,15 @@ server.configure(function () {
 // Server routes
 ////////////////////////////////////////////////////////////////////////////////
 
-server.get('/',             index);
-server.get('/new',          new_page);
-server.post('/',            create);
-server.get('/:id',          show);
-//server.get('/:id/edit',     edit);
-server.get('/:id/raw',      show_raw);
-server.get('/:id/download', download);
-//server.put('/:id',          update);
-server.del('/:id',          destroy);
+server.get('/',                 index);
+server.get('/new',              new_page);
+server.get('/:gistId',          show);
+//server.get('/:gistId/edit',   edit);
+server.get('/:gistId/raw',      show_raw);
+server.get('/:gistId/download', download);
+//server.put('/:gistId',        update);
+server.post('/',                create);
+server.del('/:gistId',          destroy);
 
 // For testing
 server.get('/500', function (req, res) {
@@ -52,6 +52,18 @@ server.get('/500', function (req, res) {
 
 server.get('/*', function (req, res) {
   throw new NotFound;
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Server routes' validations
+////////////////////////////////////////////////////////////////////////////////
+
+server.param('gistId', function (req, res, next, id) {
+  Gist.get(id, function (err, gist) {
+    if (err) return next(err);
+    req.gist = gist;
+    next();
+  });
 });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -110,7 +122,7 @@ function stop() {
   process.exit();
 }
 
-repl.context.migrate = gist.migrate;
+repl.context.migrate = Gist.migrate;
 repl.context.run_tests = tests.run_tests;
 repl.context.stop = stop;
 
@@ -124,107 +136,77 @@ function index(req, res) {
 
 function new_page(req, res) {
   var cookie_author = req.cookies.author;
-  var docs = gist.getRecent();
-  res.render('gist_new.html', {'author': cookie_author, 'gists': docs});
+  var recentGists = Gist.getRecent();
+  res.render('gist_new.html', {'author': cookie_author, 'gists': recentGists});
 }
 
 function create(req, res) {
-  var doc = req.body;
+  var gist = req.body;
   
   // Sanitize
-  var messages = [];
+  var errors = [];
   
   // Has code?
-  if (!doc.code) messages.push({'error': 'Missing code snippet'});
-
+  if (!gist.code) errors.push({'error': 'Missing code snippet'});
   // Filename valid?
-  if (doc.filename && !validFilename(doc.filename)) messages.push({'error': 'Invalid filename'});
+  if (gist.filename && !validFilename(gist.filename)) messages.push({'error': 'Invalid filename'});
 
-  if (messages.length) {
-    res.render('gist_new.html', {'messages': messages});
+  if (errors.length) {
+    res.render('gist_new.html', {'messages': errors});
     return;
   }
   
   // Highlight the code syntax
-  var languageAlias = pygments.getAlias(doc.language);
-  pygments.highlight(doc.code, languageAlias, function (highlightedCode) {
-    doc.hl_code = highlightedCode;
+  var languageAlias = pygments.getAlias(gist.language);
+  pygments.highlight(gist.code, languageAlias, function (highlightedCode) {
+    gist.hl_code = highlightedCode;
     
     // Save the gist
-    gist.create(doc, function (err, gistId) {
+    Gist.create(gist, function (err, gistId) {
       if (err) throw err;
       
       // Send irc message
-      var ircChannel = assureIrcChannel(doc.irc);
+      var ircChannel = assureIrcChannel(gist.irc);
       if (ircChannel) {
-        ircBot.say(ircChannel, formatIrcMessage(doc.author, gistId));
+        ircBot.say(ircChannel, formatIrcMessage(gist.author, gistId));
       }
       
-      res.cookie('author', doc.author, { maxAge: 900000 });
+      res.cookie('author', gist.author, { maxAge: 900000 });
       res.redirect('/'+gistId);
     });
   });
 }
 
 function show(req, res) {
-  var doc = assertValidId(req, res);
-  if (!doc) return;
+  var gist0 = req.gist;
+  var recentGists = Gist.getRecent();
+  var gist = Gist.filter(gist0);
   
-  var docs = gist.getRecent();
-  var gistDoc = gist.filter(doc);
+  if (!gist0.description) gist.description = '-';
+  if (!gist0.author) gist.author = 'anonymous';
+  gist.expires = relativeDate(Gist.calcExpireDate(gist0.ctime, gist0.expires));
   
-  if (!doc.description) gistDoc.description = '-';
-  if (!doc.author) gistDoc.author = 'anonymous';
-  gistDoc.expires = relativeDate(gist.calcExpireDate(doc.ctime, doc.expires));
-  
-  res.render('gist_view.html', {'gist': gistDoc, 'gists': docs});
+  res.render('gist_view.html', {'gist': gist, 'gists': recentGists});
 }
 
 function show_raw(req, res) {
-  var doc = assertValidId(req, res);
-  if (!doc) return;
+  var gist = req.gist;
   
-  res.send(doc.code, {'Content-Type': 'text/plain'});
+  res.send(gist.code, {'Content-Type': 'text/plain'});
 }
 
 function download(req, res) {
-  var doc = assertValidId(req, res);
-  if (!doc) return;
+  var gist = req.gist;
+  var mime = pygments.getMime(gist.language);
   
-  var mime = pygments.getMime(doc.language);
-  
-  res.send(doc.code, {'Content-Type': mime});
+  res.send(gist.code, {'Content-Type': mime});
 }
 
 function destroy(req, res) {
-  var gistId = req.params.id;
-  gist.archive(gistId, function (err) {
+  var gist = req.gist;
+  Gist.archive(gist.id, function (err) {
     res.redirect('home');
   });
-}
-
-function assertValidId(req, res) {
-  var gistId = req.params.id;
-  
-  if (!gist.validId(gistId)) { // Invalid ID
-    res.redirect('home');
-    return undefined
-  }
-  else if (!gist.exists(gistId)) { // Not found
-    res.redirect('home');
-    return undefined
-  }
-  else if (gist.isArchived(gistId)) { // Archived
-    res.redirect('home');
-    return undefined
-  }
-  else if (gist.hasExpired(gistId)) { // Expired
-    gist.archive(gistId, function (err) {
-      if (err) throw err;
-      res.redirect('home');
-    });
-    return undefined;
-  } else return gist.get(gistId);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
