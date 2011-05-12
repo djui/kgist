@@ -23,7 +23,7 @@ var fs       = require('fs'),
     repl     = require('repl').start();
 
 ////////////////////////////////////////////////////////////////////////////////
-// Server configuration
+// Configuration
 ////////////////////////////////////////////////////////////////////////////////
 
 const IRC_SERVER   = 'irc.hq.kred';
@@ -36,12 +36,23 @@ const DATA_PATH    = path.resolve('./data'); // absolute path
 const REPO_PATH    = DATA_PATH+'/git';
 const DB_PATH      = DATA_PATH+'/gist.db';
 
+var server;
+var hostIP;
+var ircBot;
+var ircBotOptions = { server:   IRC_SERVER
+                    , channels: IRC_CHANNELS
+                    , nick:     'gistbot'
+                    };
+
+////////////////////////////////////////////////////////////////////////////////
+// Initialization
+////////////////////////////////////////////////////////////////////////////////
+
 path.existsSync(DATA_PATH) || fs.mkdirSync(DATA_PATH, 0755);
 path.existsSync(REPO_PATH) || fs.mkdirSync(REPO_PATH, 0755);
 path.existsSync(DB_PATH)   || fs.writeFileSync(DB_PATH, '');
 
-
-var server = express.createServer();
+server = express.createServer();
 server.configure(function () {
   var oneYear = 1*365*24*60*60*1000;
   server.set('view engine', 'hbs');
@@ -121,14 +132,9 @@ function NotFound(msg) {
 // IRC Bot
 ////////////////////////////////////////////////////////////////////////////////
 
-var ircBotOptions = { server:   IRC_SERVER
-                    , channels: IRC_CHANNELS
-                    , nick:     'gistbot'
-                    }
-
 function formatIrcMessage(author, gistId) {
   var from = author || 'Someone anonymously';
-  var url = Gist.generateUrl(host_ip, PORT, gistId);
+  var url = Gist.generateUrl(hostIP, PORT, gistId);
   
   return from+' created a gist under '+url;
 }
@@ -137,13 +143,15 @@ function formatIrcMessage(author, gistId) {
 // Starting / Stopping
 ////////////////////////////////////////////////////////////////////////////////
 
-var host_ip = ''; hostIP();
+getHostIP(function (err, IP) {
+  hostIP = err ? HOST : IP;
+});
 
 server.listen(PORT, HOST, function () {
   console.log('Listening at http://'+HOST+':'+PORT);
 });
 
-var ircBot = jerk(function (j) {}).connect(ircBotOptions);
+ircBot = jerk(function (j) {}).connect(ircBotOptions);
 //var ircChannel = ircBot.join('#tech');
 
 function stop() {
@@ -182,7 +190,7 @@ function create(req, res) {
   if (!gist.code) errors.push({'error': 'Missing code snippet'});
   // Filename valid?
   if (gist.filename && !validFilename(gist.filename))
-    messages.push({'error': 'Invalid filename'});
+    errors.push({'error': 'Invalid filename'});
 
   if (errors.length) {
     res.render('gist_new.html', {'messages': errors});
@@ -233,7 +241,7 @@ function show(req, res) {
   if (!gist0.description) gist.description = '-';
   if (!gist0.author) gist.author = 'anonymous';
   gist.expires = relativeDate(Gist.calcExpireDate(gist0.ctime, gist0.expires));
-  gist.http_clone_link = Gist.generateUrl(host_ip, PORT, gist0.id)+'.git';
+  gist.http_clone_link = Gist.generateUrl(hostIP, PORT, gist0.id)+'.git';
   
   res.render('gist_view.html', {'gist': gist, 'gists': recentGists});
 }
@@ -347,12 +355,12 @@ function relativeDate(date) {
   }
 }
 
-function hostIP() {
+function getHostIP(callback) {
   var os = require('os');
   var dns = require('dns');
   
   dns.resolve4(os.hostname(), function (err, IPs) {
-    if (err) throw err;
-    host_ip = IPs[0];
+    if (err) callback(err);
+    else callback(null, IPs[0]);
   });
 }
