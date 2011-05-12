@@ -10,6 +10,7 @@ body { color: #101010; font-family: Helvetica, sans-serif; font-size: 15px;
        background: linear-gradient(top, #DEDEDE 0%, #FFFFFF 10%);
      }
 h1, h2, h3, h4, h5, h6 { padding: 0; margin: 12px 0 12px -2px; text-shadow: 1px 1px 1px #666666; }
+.no-cssgradients header { background: #455372; }
 header { height: 80px; margin-bottom: 40px;
          background: -moz-linear-gradient(100% 100% 90deg, #1F2842, #455372);
          background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#455372), to(#1F2842));
@@ -21,7 +22,7 @@ header { height: 80px; margin-bottom: 40px;
 a { color: #101010; }
 a:visited { color: #101010; }
 
-#header { padding: 22px; color: #FFFFFF }
+#header { padding: 22px; color: #FFFFFF; }
 
 #container { padding: 50px 50px; }
 
