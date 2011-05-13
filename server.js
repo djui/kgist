@@ -149,13 +149,13 @@ getHostIP(function (err, IP) {
 
 module.exports = server; // Used by Spark
 
-ircBot = jerk(function (j) {}).connect(ircBotOptions);
+//ircBot = jerk(function (j) {}).connect(ircBotOptions);
 //var ircChannel = ircBot.join('#tech');
 
 function stop() {
   console.log('Stopping...');
   
-  ircBot.quit('');
+  //ircBot.quit('');
   server.close();
   process.exit();
 }
