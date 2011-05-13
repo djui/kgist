@@ -59,7 +59,8 @@ server.configure(function () {
   server.set('view engine', 'hbs');
   server.set('view options', {cache: false, compile: false});
   server.register('.html', hbs);
-  server.use(express.logger({format: ':method :status :url :response-time ms'}));
+  server.use(express.logger({format: ':method :status :url :response-timems '
+                                   + ':user-agent'}));
   server.use(express.errorHandler({showStack: true, dumpExceptions: true}));
   server.use(express.static(__dirname+'/public', {maxAge: oneYear}));
   server.use(express.bodyParser());
