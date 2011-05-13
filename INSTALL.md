@@ -1,6 +1,7 @@
 To install run the following to install all node packages:
 
-> npm install express dirty hbs jerk showdown
+> npm install express dirty hbs jerk
+> npm install -g spark2
 
 npm dependencies are:
 
@@ -12,4 +13,4 @@ npm dependencies are:
 
 To Run:
 
-> node server.js
+> spark2 --config config/development.js

@@ -113,10 +113,6 @@ server.param('gistId', function (req, res, next, id) {
 // Server error handling
 ////////////////////////////////////////////////////////////////////////////////
 
-process.on('uncaughtException', function (err) {
-  console.log('Caught exception: ' + err);
-});
-
 server.error(function (err, req, res, next) {
   if (err instanceof NotFound) {
     res.render('404.html', {status: 404, layout: false});
@@ -151,9 +147,7 @@ getHostIP(function (err, IP) {
   hostIP = err ? HOST : IP;
 });
 
-server.listen(PORT, HOST, function () {
-  console.log('Listening at http://'+HOST+':'+PORT);
-});
+module.exports = server; // Used by Spark
 
 ircBot = jerk(function (j) {}).connect(ircBotOptions);
 //var ircChannel = ircBot.join('#tech');
