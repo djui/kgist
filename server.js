@@ -35,6 +35,7 @@ const PORT         = process.env.PORT || 8001;
 const DATA_PATH    = path.resolve('./data'); // absolute path
 const REPO_PATH    = DATA_PATH+'/git';
 const DB_PATH      = DATA_PATH+'/gist.db';
+const DEFAULT_LANGUAGE = 'Erlang';
 
 var server;
 var hostIP;
@@ -177,7 +178,10 @@ function index(req, res) {
 function new_page(req, res) {
   var cookie_author = req.cookies.author;
   var recentGists = Gist.getRecent();
-  res.render('gist_new.html', {'author': cookie_author, 'gists': recentGists});
+  var emptyGist = { 'author': cookie_author
+                  , 'language': DEFAULT_LANGUAGE
+                  };
+  res.render('gist_new.html', {'gists': recentGists, 'gist': emptyGist});
 }
 
 function create(req, res) {
