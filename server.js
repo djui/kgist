@@ -100,7 +100,8 @@ server.get('/*', function (req, res) {
 
 server.param('gistId', function (req, res, next, id) {
   Gist.get(id, function (err, gist) {
-    if (err) return next(err);
+    if (err) throw new NotFound;
+    
     req.gist = gist;
     next();
   });
