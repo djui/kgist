@@ -26,15 +26,16 @@ var fs       = require('fs'),
 // Configuration
 ////////////////////////////////////////////////////////////////////////////////
 
-const IRC_SERVER   = 'irc.hq.kred';
-const IRC_CHANNELS = ['#tech'];
-
 const HOST         = '0.0.0.0'; // INADDR_ANY
 const PORT         = process.env.PORT || 8001;
 
 const DATA_PATH    = path.resolve('./data'); // absolute path
 const REPO_PATH    = DATA_PATH+'/git';
 const DB_PATH      = DATA_PATH+'/gist.db';
+
+const IRC_SERVER   = 'irc.hq.kred';
+const IRC_CHANNELS = ['#tech'];
+
 const DEFAULT_LANGUAGE = 'Erlang';
 
 var server;
