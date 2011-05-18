@@ -174,7 +174,7 @@ function index(req, res) {
 
 function new_page(req, res) {
   var cookie_author = req.cookies.author;
-  var recentGists = Gist.getRecent();
+  var recentGists = Gist.getAll();
   var emptyGist = { 'author': cookie_author
                   , 'language': DEFAULT_LANGUAGE
                   };
@@ -236,7 +236,7 @@ function create(req, res) {
 
 function show(req, res) {
   var gist0 = req.gist;
-  var recentGists = Gist.getRecent();
+  var recentGists = Gist.getAll();
   var gist = Gist.filter(gist0);
   
   if (!gist0.description) gist.description = '-';
