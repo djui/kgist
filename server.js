@@ -10,17 +10,19 @@ Or have every start process emit and done event and when all are emitted, start
 server listen.
 */
 
-var fs       = require('fs'),
-    path     = require('path'),
-    express  = require('express'),
-    hbs      = require('hbs'),
- // showdown = require('showdown').Showdown,
- // jerk     = require('jerk'),
-    Gist     = require('./lib/gist'),
-    Pygments = require('./lib/pygments'),
-    Git      = require('./lib/git'),
-    tests    = require('./tests/tests'),
-    repl     = require('repl').start();
+var fs       = require('fs')
+  , path     = require('path')
+  , express  = require('express')
+  , hbs      = require('hbs')
+  , cluster  = require('cluster')
+  , http     = require('http')
+//  , showdown = require('showdown').Showdown
+//  , jerk     = require('jerk')
+  , Gist     = require('./lib/gist')
+  , Pygments = require('./lib/pygments')
+  , Git      = require('./lib/git')
+  , tests    = require('./tests/tests')
+  , repl     = require('repl').start();
 
 ////////////////////////////////////////////////////////////////////////////////
 // Configuration
