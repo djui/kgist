@@ -1,6 +1,6 @@
-<form action="/new">
-  <input type="submit" value="Create gist &rarr;" />
-</form>
+<a href="/new">                                     
+  <input type="button" value="Create gist &rarr;" />
+</a>                                                
 
 <div id="recent_gists">
   <h1>Recent</h1>
@@ -23,9 +23,9 @@
 <div id="gist">
   <h1>Gist {{gist/id}}</h1>
   <div class="gist_commands">
-    <form action"/{{gist/id}}/download">
-      <input type="submit" value="download" />
-    </form>
+    <a href="/{{gist/id}}/download">          
+      <input type="button" value="download" />
+    </a>                                      
   </div>
   <div id="gist_description">
     <strong>Description:</strong> {{gist/description}}
