@@ -69,6 +69,8 @@ server.configure(function () {
   server.use(express.cookieParser());
 });
 
+module.exports = server;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Server routes
 ////////////////////////////////////////////////////////////////////////////////
@@ -147,22 +149,8 @@ getHostIP(function (err, IP) {
   hostIP = err ? HOST : IP;
 });
 
-module.exports = server; // Used by Spark
-
 //ircBot = jerk(function (j) {}).connect(ircBotOptions);
 //var ircChannel = ircBot.join('#tech');
-
-function stop() {
-  console.log('Stopping...');
-  
-  //ircBot.quit('');
-  server.close();
-  process.exit();
-}
-
-repl.context.migrate = Gist.migrate;
-repl.context.run_tests = tests.run_tests;
-repl.context.stop = stop;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main fuctionality
