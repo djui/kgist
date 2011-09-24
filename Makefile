@@ -1,13 +1,13 @@
 all: compile
 
 compile: deps
-  ./rebar compile
+	./rebar compile
 
 deps:
-  ./rebar get-deps
+	./rebar get-deps
 
 clean:
-  ./rebar clean
+	./rebar clean
 
 distclean: clean
-  ./rebar delete-deps
+	./rebar delete-deps

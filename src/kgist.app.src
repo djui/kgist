@@ -1,10 +1,10 @@
 %% -*- mode: erlang;erlang-indent-level: 2;indent-tabs-mode: nil -*-
 {application, kgist,
- [ {description, ""}
- , {vsn, "0.1.0"}
- , {modules, []}
- , {registered, []}
- , {applications, [ kernel
+ [ {description, ""}
+ , {vsn, "0.1.0"}
+ , {modules, []}
+ , {registered, []}
+ , {applications, [ kernel
                   , stdlib
                   , sasl
                   , crypto
@@ -12,5 +12,5 @@
                   , webmachine
                   ]}
  , {mod, {kgist_app, []}}
- , {env, []}
- ]}.
+ , {env, []}
+ ]}.

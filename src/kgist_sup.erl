@@ -20,23 +20,22 @@ init([]) ->
         , Pygments
         , Mustache
         ]}.
+
 init([]) ->
-  Host = case application:get_env(host) of
+  Host = case application:get_env(host) of
            undefined -> "0.0.0.0";
            Defined  -> Defined
          end,
-  Port = case application:get_env(port) of
+  Port = case application:get_env(port) of
            undefined -> "8080";
            Defined   -> Defined
          end,
-  {ok, Dispatch} = file:consult(filename:join([filename:dirname(code:which(?MODULE)), "..", "priv", "dispatch.conf"])),
-  WebConfig = [ {ip, Host}
-              , {port, Port}
-              , {log_dir, "priv/log"}
-              , {dispatch, Dispatch}
+  {ok, Dispatch} = file:consult(filename:join([filename:dirname(code:which(?MODULE)), "..", "priv", "dispatch.conf"])),
+  WebConfig = [ {ip, Host}
+              , {port, Port}
+              , {log_dir, "priv/log"}
+              , {dispatch, Dispatch}
               ],
-    Web = {webmachine_mochiweb,
-           {webmachine_mochiweb, start, [WebConfig]},
-           permanent, 5000, worker, dynamic},
-    Processes = [Web],
-    {ok, { {one_for_one, 10, 10}, Processes} }.
+  Web = {webmachine_mochiweb, {webmachine_mochiweb, start, [WebConfig]}, permanent, 5000, worker, dynamic},
+  Processes = [Web],
+  {ok, {{one_for_one, 10, 10}, Processes}}.
