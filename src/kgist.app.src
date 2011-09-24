@@ -1,0 +1,16 @@
+%% -*- mode: erlang;erlang-indent-level: 2;indent-tabs-mode: nil -*-
+{application, kgist,
+ [ {description, ""}
+ , {vsn, "0.1.0"}
+ , {modules, []}
+ , {registered, []}
+ , {applications, [ kernel
+                  , stdlib
+                  , sasl
+                  , crypto
+                  , mochiweb
+                  , webmachine
+                  ]}
+ , {mod, {kgist_app, []}}
+ , {env, []}
+ ]}.
