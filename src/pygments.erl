@@ -3,7 +3,7 @@
 -export([ pygmentize/1
         ]).
 
-pygmentize(Source) ->
+pygmentize(_Source) ->
   nyi.
 
 os_cmd(Cmd) ->
@@ -11,7 +11,7 @@ os_cmd(Cmd) ->
     Port = erlang:open_port({spawn_command, Cmd}, [exit_status]),
     os_cmd_loop(Port, [])
   catch
-    C:R ->
+    _C:R ->
       {error, R}
   end.
 
