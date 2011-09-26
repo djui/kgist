@@ -16,6 +16,9 @@
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
 start() ->
+  %% Logger
+  %% Needs to be configured first
+  %% application:start(riak_err),
   %% DB
   application:set_env(mnesia, dir, get_env(kgist, db_dir, ?DEFAULT_DB_DIR)),
   ensure_started(mnesia),
@@ -35,7 +38,8 @@ stop() ->
   Res = application:stop(kgist),
   application:stop(webmachine),
   application:stop(mochiweb),
-  application:stop(mnesia),  
+  application:stop(mnesia),
+  %% application:stop(riak_err),
   application:stop(crypto),
   application:stop(inets),
   Res.
