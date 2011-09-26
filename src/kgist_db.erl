@@ -2,6 +2,7 @@
 
 %%% Exports ====================================================================
 -export([ ensure_initialized/0
+        , get/1
         , migrate/0
         , backup/1
         ]).
@@ -29,6 +30,13 @@ ensure_initialized() ->
       ok;
     {atomic, ok} ->
       ok
+  end.
+
+get(Id) ->
+  case mnesia:dirty_read(?GIST_TABLE, Id) of
+    []             -> {error, not_found};
+    {aborted, Err} -> {error, Err};
+    [R]            -> {ok, R}
   end.
 
 migrate() ->
