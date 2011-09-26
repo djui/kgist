@@ -13,7 +13,7 @@
 %%% API ------------------------------------------------------------------------
 ensure_initialized() ->
   Node = node(),
-  TableName = gist,
+  TableName = ?GIST_TABLE,
   TableDef  = [ {disc_copies, [Node]}
               , {attributes, record_info(fields, gist)}
               , {type, set} 
