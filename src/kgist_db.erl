@@ -40,8 +40,13 @@ get(Id) ->
   end.
 
 migrate() ->
- migrate_schema(),
- migrate_from_node().
+  %% Migrate mnesia schema
+  migrate_schema(),
+  %% Migrate old node.js database
+  {ok, DBDir} = application:get_env(mnesia, dir),
+  migrate_from_node(filename:join([DBDir, "gist.db"])),
+  %% ...
+  ok.
 
 backup(Filename) ->
   mnesia:backup(Filename).
@@ -50,13 +55,12 @@ backup(Filename) ->
 migrate_schema() ->
   nyi.
 
-migrate_from_node() ->
-  {ok, DBDir} = application:get_env(mnesia, dir),
-  {ok, File} = file:read_file(filename:join([DBDir, "gist.db"])),
+migrate_from_node(DBFilename) ->
+  {ok, File} = file:read_file(DBFilename),
   Lines = string:tokens(binary_to_list(File), "\n"),
   MigrateFun =
     fun(Line) ->
-        {struct, [ {<<"key">>, Key}
+        {struct, [ {<<"key">>, _Key}
                  , {<<"val">>, {struct, Gist}}
                  ]} = mochijson2:decode(Line),
         Description0  = from_binary(proplists:get_value(<<"description">>, Gist)),
