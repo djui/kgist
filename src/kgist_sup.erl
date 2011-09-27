@@ -28,5 +28,11 @@ init([]) ->
                , {webmachine_mochiweb, start, [WebConfig]}
                , permanent, 5000, worker, dynamic
                },
-  SupTree = {{one_for_one, 10, 10}, [Webmachine]},
+  ViewServer = { kgist_view
+               , {kgist_view, start_link, []}
+               , permanent, 5000, worker, [kgist_view]
+               },
+  SupTree = {{one_for_one, 10, 10}, [ Webmachine
+                                    , ViewServer
+                                    ]},
   {ok, SupTree}.

@@ -61,8 +61,10 @@ to_html(ReqData, Ctx=#ctx{action=raw}) ->
 to_html(ReqData, Ctx=#ctx{action=download}) ->
   to_text(ReqData, Ctx);
 to_html(ReqData, Ctx=#ctx{action=show, resource=Gist}) ->
-  HBody = io_lib:format("<html><body><h1>GIST ~p</h1>~s</body></html>~n",
-                        [Gist#gist.id, Gist#gist.code_highlighted]),
+  TplCtx = dict:from_list([ {id,      Gist#gist.id}
+                          , {hl_code, Gist#gist.code_highlighted}
+                          ]),
+  HBody = kgist_view:render(index, TplCtx),
   {HBody, ReqData, Ctx}.
   
 %%% Internals ------------------------------------------------------------------
