@@ -1,8 +1,9 @@
 -module(kgist_gist_resource).
 
 %%% Exports ====================================================================
--export([ content_types_provided/2
-        , init/1
+-export([ init/1 ]).
+-export([ allowed_methods/2
+        , content_types_provided/2
         , is_gist/1
         , resource_exists/2
         , to_html/2
@@ -10,8 +11,8 @@
         ]).
 
 %%% Includes ===================================================================
--include_lib("webmachine/include/webmachine.hrl").
 -include_lib("kgist/include/kgist.hrl").
+-include_lib("webmachine/include/webmachine.hrl").
 
 %%% Records ====================================================================
 -record(ctx, { action
@@ -20,19 +21,12 @@
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
-is_gist(ReqData) ->
-  Id = wrq:path_info(id, ReqData),
-  case gist_id(Id) of
-    error   -> false;
-    {ok, _} -> true
-  end.
-  
-%%% Callbacks ------------------------------------------------------------------
 init([]) ->
   init([show]);
 init([Action]) ->
   {ok, #ctx{action=Action}}.
     
+%%% Callbacks ------------------------------------------------------------------
 content_types_provided(ReqData, Ctx) ->
   {[ {"text/plain", to_text}
    , {"text/html", to_html}
@@ -67,6 +61,13 @@ to_html(ReqData, Ctx=#ctx{action=show, resource=Gist}) ->
   HBody = kgist_view:render(index, TplCtx),
   {HBody, ReqData, Ctx}.
   
+is_gist(ReqData) ->
+  Id = wrq:path_info(id, ReqData),
+  case gist_id(Id) of
+    error   -> false;
+    {ok, _} -> true
+  end.
+
 %%% Internals ------------------------------------------------------------------
 gist_id(S) ->
   case string:to_integer(S) of
