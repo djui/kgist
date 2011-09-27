@@ -27,6 +27,9 @@ init([Action]) ->
   {ok, #ctx{action=Action}}.
     
 %%% Callbacks ------------------------------------------------------------------
+allowed_methods(ReqData, Ctx) ->
+  {['HEAD', 'GET', 'DELETE'], ReqData, Ctx}.
+
 content_types_provided(ReqData, Ctx) ->
   {[ {"text/plain", to_text}
    , {"text/html", to_html}
