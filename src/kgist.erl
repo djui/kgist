@@ -7,7 +7,6 @@
 
 %%% Imports ====================================================================
 -import(tulib_application, [ ensure_started/1
-                           , get_env/3
                            ]).
 
 %%% Includes ===================================================================
@@ -20,7 +19,6 @@ start() ->
   %% Needs to be configured first
   %% application:start(riak_err),
   %% DB
-  application:set_env(mnesia, dir, get_env(kgist, db_dir, ?DEFAULT_DB_DIR)),
   ensure_started(mnesia),
   kgist_db:ensure_initialized(),
   {ok, DBDir} = application:get_env(mnesia, dir),
