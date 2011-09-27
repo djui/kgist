@@ -2,4 +2,6 @@
 /ebin/*.app
 /ebin/*.beam
 /priv/*
+!/priv/views
+!/priv/www
 erl_crash.dump

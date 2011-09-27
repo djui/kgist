@@ -1,0 +1,80 @@
+<a href="/new">                                     
+  <input type="button" value="Create gist &rarr;" />
+</a>                                                
+
+<div id="recent_gists">
+  <h1>Recent</h1>
+  {{#gists}}
+  <ul id="recent_list">
+    <li>
+      Gist <a href="/{{id}}">{{id}}</a> by {{author}}<br/>
+      <span class="description">{{description}}</span>
+    </li>
+  </ul>
+  {{/gists}}
+</div>
+
+<!--
+<form action="/">
+  <input type="submit" value="&larr; Overview" />
+</form>
+-->
+
+<div id="gist">
+  <h1>Gist {{gist_id}}</h1>
+  <div class="gist_commands">
+    <a href="/{{gist_id}}/download">          
+      <input type="button" value="download" />
+    </a>                                      
+  </div>
+  <div id="gist_description">
+    <strong>Description:</strong> {{gist_description}}
+  </div>
+  <div id="gist_author">
+    <strong>Author:</strong> {{gist_author}}
+  </div>
+  <!--
+  <div id="gist_http_clone_link">
+    <strong>Clone:</strong> <a href="{{gist_http_clone_link}}">{{gist_http_clone_link}}</a>
+  </div>
+  -->
+  <div id="gist_snippet">
+    <div id="gist_snippet_filename">
+      <strong>File:</strong> {{gist_filename}}
+      <!--
+          {{#gist_filename}}
+            {{gist_filename}}
+          {{else}}
+            &#8212;
+          {{/gist_filename}}
+        -->
+    </div>
+    <div id="gist_snippet_exports">
+      <a href="/{{gist_id}}/raw">raw</a>
+      <!-- <a href="/{{gist_id}}/history">history</a> -->
+    </div>
+    <div id="gist_snippet_language">
+      <strong>Language:</strong> {{gist_language}}
+    </div>
+    <div id="gist_snippet_code">
+      {{{gist_hl_code}}}
+    </div>
+  </div>
+  <div class="gist_commands">
+  <!--
+    <form action"{{gist_id}}/comment">
+      <input type="submit" value="comment" disabled />
+    </form>
+    <form action"{{gist_id}}/edit">
+      <input type="submit" value="edit" disabled />
+    </form>
+  -->
+    <form method="post" action"{{gist_id}}">
+      <input type="hidden" name="_method" value="delete" />
+      <input type="submit" value="archive" />
+    </form>
+  </div>
+  <div id="gist_expires">
+    <strong>Expires:</strong> {{gist_expires}}
+  </div>
+</div>
