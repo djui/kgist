@@ -31,14 +31,23 @@ start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 init([]) ->
+  DefaultLanguage = application:get_env(default_language),
   Cmd   = os:find_executable("pygmentize"),
-  Flags = "",
+  Flags = [ {"-l", DefaultLanguage     }
+          , {"-f", "html"              }
+          , {"-P", "encoding=utf-8"    }
+          , {"-P", "linenos=inline"    }
+          , {"-P", "linenospecial=2"   }
+          , {"-P", "lineanchors=linum" }
+          , {"-P", "anchorlinenos=true"}
+          ],
   {ok, #state{ cmd   = Cmd
-             , flags = Flags
+             , flags = orddict:from_list(Flags)
              }}.
 
-handle_call({pygmentize, CodeText, Language}, _From, State=#state{cmd=Cmd, flags=Flags}) ->
-  CodeHighlighted = os_cmd(Cmd ++ " " ++ string:join(" ", Flags) ++ " " ++ Language ++ " - " ++ CodeText),
+handle_call({pygmentize, CodeText, Language}, _From,
+            State=#state{cmd=Cmd, flags=Flags}) ->
+  CodeHighlighted = do_pygmentize(Cmd, Flags, Language, CodeText),
   {reply, CodeHighlighted, State};
 handle_call(_, _From, State) ->
   {reply, undefined, State}.
@@ -50,16 +59,45 @@ handle_info(_Info, State) ->
   {noreply, State}.
 
 terminate(_Reason, _State) ->
+  true = erlang:port_close(Port),
   ok.
 
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 %%% Internals ------------------------------------------------------------------
+do_pygmentize(Cmd, Flags0, Language, CodeText) ->
+  Flags = orddict:store("-l", Language, Flags0),
+  Args  = orddict:fold(fun({K,V}, Acc) -> Acc++[K,V] end, [], Flags),
+  try
+    Port = erlang:open_port({spawn_executable, Cmd}, [ {args, Args}
+                                                     , std_inout
+                                                     , exit_status
+                                                     ]),
+    do_pygmentize_loop(Port, []),
+  catch
+    _C:R ->
+      {error, R}
+  end.
+
+do_pygmentize_loop(Port, Data0) ->
+  receive
+    {Port, {data, Data}} ->
+      do_pygmentize_loop(Port, Data0 ++ Data);
+    {Port, {exit_status, Status}} ->
+      {ok, Status};
+    {'EXIT', Port, Reason} ->
+      {error, Reason}
+  end.
+
+
+
+%% REMOVE
 os_cmd(Cmd) ->
   try
-    Port = erlang:open_port({spawn_command, Cmd}, [exit_status]),
-    os_cmd_loop(Port, [])
+    Port = erlang:open_port({spawn_executable, Cmd}, [exit_status]),
+    Res = os_cmd_loop(Port, []),
+    true = erlang:close_port(Port)
   catch
     _C:R ->
       {error, R}
