@@ -32,7 +32,12 @@ init([]) ->
                , {kgist_view, start_link, []}
                , permanent, 5000, worker, [kgist_view]
                },
+  RenderServer = { pygmentize
+                 , {pygmentize, start_link, []}
+                 , permanent, 5000, worker, [pygmentize]
+                 },
   SupTree = {{one_for_one, 10, 10}, [ Webmachine
                                     , ViewServer
+                                    , Renderserver
                                     ]},
   {ok, SupTree}.
