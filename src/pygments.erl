@@ -33,13 +33,14 @@ start_link() ->
 init([]) ->
   DefaultLanguage = application:get_env(default_language),
   Cmd   = os:find_executable("pygmentize"),
-  Flags = [ {language,    [ "-l", DefaultLanguage     ]}
-          , {out_format,  [ "-f", "html"              ]}
-          , {encoding,    [ "-P", "encoding=utf-8"    ]}
-          , {linenumbers, [ "-P", "linenos=inline"
-                          , "-P", "linenospecial=2"
-                          , "-P", "lineanchors=linum"
-                          , "-P", "anchorlinenos=true"]}
+  Flags = [ {language,    arg("-l", DefaultLanguage)}
+          , {out_format,  arg("-f", "html")}
+          , {encoding,    param("encoding", "utf-8")}
+          , {linenumbers, lists:flatten([ param("linenos",       "inline")
+                                        , param("linenospecial", "2")
+                                        , param("lineanchors",   "linum")
+                                        , param("anchorlinenos", "true")
+                                        ])}
           ],
   {ok, #state{ cmd   = Cmd
              , flags = orddict:from_list(Flags)
@@ -85,3 +86,9 @@ do_pygmentize_loop(Port, Data) ->
     {Port, {exit_status, Status}} -> {ok, Status, Data};
     {'EXIT', Port, Reason}        -> {error, Reason}
   end.
+
+arg(Flag, Value) ->
+  [Flag, Value].
+
+param(Key, Value) ->
+  ["-P", Key ++ "=" ++ Value].
