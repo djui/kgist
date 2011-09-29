@@ -93,3 +93,8 @@ arg(Flag, Value) ->
 
 param(Key, Value) ->
   ["-P", Key ++ "=" ++ Value].
+
+%% Port = erlang:open_port({spawn_executable, os:find_executable("pygmentize")}, [exit_status, use_stdio, {args, ["-l", "erlang", "-f", "html", "-P", "encoding=utf-8"]}]).
+%% erlang:port_command(Port, "-module(\"foo\").").
+%% receive {Port, {data, Data}} -> io:format("~p~n", [Data]) after 0 -> done end.
+%% receive {Port, {exit_status, Status}} -> io:format("Status: ~p~n", [Status]) after 0 -> done end.

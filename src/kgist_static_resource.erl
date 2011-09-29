@@ -37,17 +37,13 @@ accept_content(ReqData, Ctx) ->
                {true, _} ->
                  ReqData;
                _ ->
-                 LOC = "http://" ++
-                   wrq:get_req_header("host", ReqData) ++
-                   "/fs/" ++ Path,
+                 LOC = "http://" ++ wrq:get_req_header("host", ReqData) ++ "/fs/" ++ Path,
                  wrq:set_resp_header("Location", LOC, ReqData)
              end,
   Value = wrq:req_body(ReqData1),
   case file:write_file(FP, Value) of
-    ok ->
-      {true, wrq:set_resp_body(Value, ReqData1), Ctx};
-    Err ->
-      {{error, Err}, ReqData1, Ctx}
+    ok  -> {true, wrq:set_resp_body(Value, ReqData1), Ctx};
+    Err -> {{error, Err}, ReqData1, Ctx}
   end.    
 
 allowed_methods(ReqData, Ctx) ->
@@ -55,17 +51,15 @@ allowed_methods(ReqData, Ctx) ->
 
 content_types_provided(ReqData, Ctx) ->
   CT = webmachine_util:guess_mime(wrq:disp_path(ReqData)),
-  {[{CT, provide_content}], ReqData,
-   Ctx#ctx{metadata=[{'content-type', CT}|Ctx#ctx.metadata]}}.
+  {[{CT, provide_content}], ReqData, Ctx#ctx{metadata=[{'content-type', CT}|Ctx#ctx.metadata]}}.
 
 content_types_accepted(ReqData, Ctx) ->
   CT = case wrq:get_req_header("content-type", ReqData) of
          undefined -> "application/octet-stream";
-         X -> X
+         X         -> X
        end,
   {MT, _Params} = webmachine_util:media_type_to_detail(CT),
-  {[{MT, accept_content}], ReqData,
-   Ctx#ctx{metadata=[{'content-type', MT}|Ctx#ctx.metadata]}}.
+  {[{MT, accept_content}], ReqData, Ctx#ctx{metadata=[{'content-type', MT}|Ctx#ctx.metadata]}}.
 
 generate_etag(ReqData, Ctx) ->
   case maybe_fetch_object(Ctx, wrq:disp_path(ReqData)) of
@@ -80,8 +74,7 @@ generate_etag(ReqData, Ctx) ->
 last_modified(ReqData, Ctx) ->
   {true, FullPath} = file_exists(Ctx, wrq:disp_path(ReqData)),
   LMod = filelib:last_modified(FullPath),
-  {LMod, ReqData, Ctx#ctx{metadata=[{'last-modified', httpd_util:rfc1123_date(LMod)}|
-                                    Ctx#ctx.metadata]}}.
+  {LMod, ReqData, Ctx#ctx{metadata=[{'last-modified', httpd_util:rfc1123_date(LMod)}| Ctx#ctx.metadata]}}.
 
 provide_content(ReqData, Ctx) ->
   case maybe_fetch_object(Ctx, wrq:disp_path(ReqData)) of
@@ -95,32 +88,20 @@ provide_content(ReqData, Ctx) ->
 resource_exists(ReqData, Ctx) ->
   Path = wrq:disp_path(ReqData),
   case file_exists(Ctx, Path) of
-    {true, _} ->
-      {true, ReqData, Ctx};
-    _ ->
-      case Path of
-        "p" -> {true, ReqData, Ctx};
-        _ -> {false, ReqData, Ctx}
-      end
+    {true, _} -> {true,  ReqData, Ctx};
+    false     -> {false, ReqData, Ctx}
   end.
 
 %%% Internals ------------------------------------------------------------------
-file_path(_Ctx, []) ->
-  false;
-file_path(Ctx, Name) ->
-  RelName = case hd(Name) of
-              "/" -> tl(Name);
-              _ -> Name
-            end,
-  filename:join([Ctx#ctx.root, RelName]).
+file_path(_Ctx, [])         -> false;
+file_path(Ctx,  ["/"|Name]) -> file_path(Ctx, Name);
+file_path(Ctx,  RelName)    -> filename:join([Ctx#ctx.root, RelName]).
 
 file_exists(Ctx, Name) ->
   NamePath = file_path(Ctx, Name),
   case filelib:is_regular(NamePath) of
-    true ->
-      {true, NamePath};
-    false ->
-      false
+    true  -> {true, NamePath};
+    false -> false
   end.
 
 maybe_fetch_object(Ctx, Path) ->
