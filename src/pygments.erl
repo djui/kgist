@@ -24,7 +24,7 @@
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
 pygmentize(CodeText, Language) ->
-  gen_server:call(?SERVER, {pygmentize, CodeText, Language}).
+  gen_server:call(?SERVER, {pygmentize, Language, CodeText}).
 
 %%% Callbacks ------------------------------------------------------------------
 start_link() ->
@@ -45,9 +45,11 @@ init([]) ->
              , flags = orddict:from_list(Flags)
              }}.
 
-handle_call({pygmentize, CodeText, Language}, _From,
-            State=#state{cmd=Cmd, flags=Flags}) ->
-  {ok, 0, CodeHighlighted} = do_pygmentize(Cmd, Flags, Language, CodeText),
+handle_call({pygmentize, Language, CodeText}, _From,
+            State=#state{cmd=Cmd, flags=Flags0}) ->
+  Flags = orddict:store(language, ["-l", Language], Flags0),
+  Args  = orddict:fold(fun({_K,V}, Acc) -> V++Acc end, [], Flags),
+  {ok, 0, CodeHighlighted} = do_pygmentize(Cmd, Args, CodeText),
   {reply, CodeHighlighted, State};
 handle_call(_, _From, State) ->
   {reply, undefined, State}.
@@ -65,13 +67,11 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 %%% Internals ------------------------------------------------------------------
-do_pygmentize(Cmd, Flags0, Language, CodeText) ->
-  Flags  = orddict:store(language, ["-l", Language], Flags0),
-  Args   = orddict:fold(fun({_K,V}, Acc) -> V++Acc end, [], Flags),
+do_pygmentize(Cmd, Args, Payload) ->
   Conf   = [std_inout, exit_status, {args, Args}],
   try
     Port = erlang:open_port({spawn_executable, Cmd}, Conf),
-    true = erlang:port_command(Port, CodeText),
+    true = erlang:port_command(Port, Payload),
     Res0 = do_pygmentize_loop(Port, []),
     true = erlang:port_close(Port),
     Res0
