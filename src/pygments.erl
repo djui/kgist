@@ -23,7 +23,7 @@
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
-pygmentize(CodeText, Language) ->
+pygmentize(Language, CodeText) ->
   gen_server:call(?SERVER, {pygmentize, Language, CodeText}).
 
 %%% Callbacks ------------------------------------------------------------------
@@ -36,29 +36,32 @@ init([]) ->
   Flags = [ {language,    arg("-l", DefaultLanguage)}
           , {out_format,  arg("-f", "html")}
           , {encoding,    param("encoding", "utf-8")}
-          , {linenumbers, lists:flatten([ param("linenos",       "inline")
-                                        , param("linenospecial", "2")
-                                        , param("lineanchors",   "linum")
-                                        , param("anchorlinenos", "true")
-                                        ])}
+          , {linenumbers, lists:concat([ param("linenos",       "inline")
+                                       , param("linenospecial", "2")
+                                       , param("lineanchors",   "linum")
+                                       , param("anchorlinenos", "true")
+                                       ])}
           ],
   {ok, #state{ cmd   = Cmd
              , flags = orddict:from_list(Flags)
              }}.
 
 handle_call({pygmentize, Language, CodeText}, _From,
-            State=#state{cmd=Cmd, flags=Flags0}) ->
-  Flags = orddict:store(language, ["-l", Language], Flags0),
-  Args  = orddict:fold(fun({_K,V}, Acc) -> V++Acc end, [], Flags),
-  {ok, 0, CodeHighlighted} = do_pygmentize(Cmd, Args, CodeText),
-  {reply, CodeHighlighted, State};
+            State=#state{cmd=Cmd0, flags=Flags0}) ->
+  Flags   = orddict:store(language, arg("-l", Language), Flags0),
+  Args    = orddict:fold(fun(_Key, Value, Acc) -> Value++Acc end, [], Flags),
+  Cmd     = string:join([Cmd0|Args], " "),
+  {ok, S} = stdinout:start_link(Cmd),
+  [Res]   = stdinout:send(S, CodeText),
+  true    = stdinout:shutdown(S),
+  HLCode  = binary_to_list(Res),
+  {reply, HLCode, State};
 handle_call(_, _From, State) ->
   {reply, undefined, State}.
 
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
-%% TODO Handle receive messages by handle_info, not with the _loop! <- Same process
 handle_info(_Info, State) ->
   {noreply, State}.
 
@@ -69,32 +72,8 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 %%% Internals ------------------------------------------------------------------
-do_pygmentize(Cmd, Args, Payload) ->
-  Conf   = [std_inout, exit_status, {args, Args}],
-  try
-    Port = erlang:open_port({spawn_executable, Cmd}, Conf),
-    true = erlang:port_command(Port, Payload),
-    %% TODO Send "finish"/^D command
-    Res0 = do_pygmentize_loop(Port, []),
-    true = erlang:port_close(Port),
-    Res0
-  catch _:R -> {error, R}
-  end.
-
-do_pygmentize_loop(Port, Data) ->
-  receive
-    {Port, {data, NewData}}       -> do_pygmentize_loop(Port, Data ++ NewData);
-    {Port, {exit_status, Status}} -> {ok, Status, Data};
-    {'EXIT', Port, Reason}        -> {error, Reason}
-  end.
-
 arg(Flag, Value) ->
   [Flag, Value].
 
 param(Key, Value) ->
   ["-P", Key ++ "=" ++ Value].
-
-%% Port = erlang:open_port({spawn_executable, os:find_executable("pygmentize")}, [exit_status, use_stdio, {args, ["-l", "erlang", "-f", "html", "-P", "encoding=utf-8"]}]).
-%% erlang:port_command(Port, "-module(\"foo\").").
-%% receive {Port, {data, Data}} -> io:format("~p~n", [Data]) after 0 -> done end.
-%% receive {Port, {exit_status, Status}} -> io:format("Status: ~p~n", [Status]) after 0 -> done end.
