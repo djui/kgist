@@ -38,6 +38,6 @@ init([]) ->
                  },
   SupTree = {{one_for_one, 10, 10}, [ Webmachine
                                     , ViewServer
-                                    , Renderserver
+                                    , RenderServer
                                     ]},
   {ok, SupTree}.

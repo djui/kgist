@@ -14,8 +14,8 @@
         ]).
 
 %%% Records ====================================================================
--record(state, { view_dir
-               , views
+-record(state, { cmd
+               , flags
                }).
 
 %%% Defines ====================================================================
@@ -59,24 +59,19 @@ handle_info(_Info, State) ->
   {noreply, State}.
 
 terminate(_Reason, _State) ->
-  true = erlang:port_close(Port),
   ok.
 
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 %%% Internals ------------------------------------------------------------------
-do_pygmentize(Cmd, Flags, CodeText) ->
-  do_pygmentize(Cmd, Flags, CodeText, undefined).
-
-do_pygmentize(Cmd, Flags, CodeText, undefined) ->
-  do_pygmentize(Cmd, Flags, CodeText, application:get_env(default_language);
 do_pygmentize(Cmd, Flags0, Language, CodeText) ->
   Flags  = orddict:store(language, ["-l", Language], Flags0),
   Args   = orddict:fold(fun({_K,V}, Acc) -> V++Acc end, [], Flags),
   Conf   = [std_inout, exit_status, {args, Args}],
   try
     Port = erlang:open_port({spawn_executable, Cmd}, Conf),
+    true = erlang:port_command(Port, CodeText),
     Res0 = do_pygmentize_loop(Port, []),
     true = erlang:port_close(Port),
     Res0
@@ -85,7 +80,7 @@ do_pygmentize(Cmd, Flags0, Language, CodeText) ->
 
 do_pygmentize_loop(Port, Data) ->
   receive
-    {Port, {data, Data}}          -> do_pygmentize_loop(Port, Data ++ NewData);
+    {Port, {data, NewData}}       -> do_pygmentize_loop(Port, Data ++ NewData);
     {Port, {exit_status, Status}} -> {ok, Status, Data};
     {'EXIT', Port, Reason}        -> {error, Reason}
   end.
