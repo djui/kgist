@@ -1,30 +1,47 @@
 -module(kgist_main_resource).
 
 %%% Exports ====================================================================
--export([ init/1
-        , to_html/2
+-export([ init/1 ]).
+-export([ allowed_methods/2
         , content_types_provided/2
+        , to_html/2
+        , to_text/2
         ]).
 
 %%% Includes ===================================================================
+-include_lib("kgist/include/kgist.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
 
+%%% Records ====================================================================
+-record(ctx, { action
+             }).
+
 %%% Code =======================================================================
-%%% Callbacks ------------------------------------------------------------------
-init(X) ->
-  io:format("Main init: ~p~n", [X]),
-  {ok, undefined}.
+%%% API ------------------------------------------------------------------------
+init([]) ->
+  init([overview]);
+init([Action]) ->
+  {ok, #ctx{action=Action}}.
     
-content_types_provided(ReqData, Context) ->
-  {[{"text/html", to_html}], ReqData, Context}.
+%%% Callbacks ------------------------------------------------------------------
+allowed_methods(ReqData, Ctx) ->
+  {['HEAD', 'GET', 'POST', 'PUT'], ReqData, Ctx}.
 
-to_html(ReqData, Context) ->
-  Path = wrq:disp_path(ReqData),
+content_types_provided(ReqData, Ctx) ->
+  {[ {"text/plain", to_text}
+   , {"text/html", to_html}
+   ], ReqData, Ctx}.
 
-  %% io:format("Main ReqData: ~p~n", [ReqData]),
-  io:format("Main Path: ~p~n", [Path]),
-  io:format("Main Context: ~p~n", [Context]),
+to_text(ReqData, Ctx) ->
+  Text = "TEXT",
+  {Text, ReqData, Ctx}.
 
-  HBody = io_lib:format("<html><body>MAIN</body></html>~n",
-                        []),
-  {HBody, ReqData, Context}.
+to_html(ReqData, Ctx=#ctx{action=overview}) ->
+  HBody = "OVERVIEW",
+  {HBody, ReqData, Ctx};
+
+to_html(ReqData, Ctx=#ctx{action=new}) ->
+  HBody = "NEW",
+  {HBody, ReqData, Ctx}.
+
+%%% Internals ------------------------------------------------------------------
