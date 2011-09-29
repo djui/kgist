@@ -33,13 +33,13 @@ start_link() ->
 init([]) ->
   DefaultLanguage = application:get_env(default_language),
   Cmd   = os:find_executable("pygmentize"),
-  Flags = [ {"-l", DefaultLanguage     }
-          , {"-f", "html"              }
-          , {"-P", "encoding=utf-8"    }
-          , {"-P", "linenos=inline"    }
-          , {"-P", "linenospecial=2"   }
-          , {"-P", "lineanchors=linum" }
-          , {"-P", "anchorlinenos=true"}
+  Flags = [ {language,    [ "-l", DefaultLanguage     ]}
+          , {out_format,  [ "-f", "html"              ]}
+          , {encoding,    [ "-P", "encoding=utf-8"    ]}
+          , {linenumbers, [ "-P", "linenos=inline"
+                          , "-P", "linenospecial=2"
+                          , "-P", "lineanchors=linum"
+                          , "-P", "anchorlinenos=true"]}
           ],
   {ok, #state{ cmd   = Cmd
              , flags = orddict:from_list(Flags)
@@ -47,7 +47,7 @@ init([]) ->
 
 handle_call({pygmentize, CodeText, Language}, _From,
             State=#state{cmd=Cmd, flags=Flags}) ->
-  CodeHighlighted = do_pygmentize(Cmd, Flags, Language, CodeText),
+  {ok, 0, CodeHighlighted} = do_pygmentize(Cmd, Flags, Language, CodeText),
   {reply, CodeHighlighted, State};
 handle_call(_, _From, State) ->
   {reply, undefined, State}.
@@ -66,49 +66,26 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 %%% Internals ------------------------------------------------------------------
+do_pygmentize(Cmd, Flags, CodeText) ->
+  do_pygmentize(Cmd, Flags, CodeText, undefined).
+
+do_pygmentize(Cmd, Flags, CodeText, undefined) ->
+  do_pygmentize(Cmd, Flags, CodeText, application:get_env(default_language);
 do_pygmentize(Cmd, Flags0, Language, CodeText) ->
-  Flags = orddict:store("-l", Language, Flags0),
-  Args  = orddict:fold(fun({K,V}, Acc) -> Acc++[K,V] end, [], Flags),
+  Flags  = orddict:store(language, ["-l", Language], Flags0),
+  Args   = orddict:fold(fun({_K,V}, Acc) -> V++Acc end, [], Flags),
+  Conf   = [std_inout, exit_status, {args, Args}],
   try
-    Port = erlang:open_port({spawn_executable, Cmd}, [ {args, Args}
-                                                     , std_inout
-                                                     , exit_status
-                                                     ]),
-    do_pygmentize_loop(Port, []),
-  catch
-    _C:R ->
-      {error, R}
+    Port = erlang:open_port({spawn_executable, Cmd}, Conf),
+    Res0 = do_pygmentize_loop(Port, []),
+    true = erlang:port_close(Port),
+    Res0
+  catch _:R -> {error, R}
   end.
 
-do_pygmentize_loop(Port, Data0) ->
+do_pygmentize_loop(Port, Data) ->
   receive
-    {Port, {data, Data}} ->
-      do_pygmentize_loop(Port, Data0 ++ Data);
-    {Port, {exit_status, Status}} ->
-      {ok, Status};
-    {'EXIT', Port, Reason} ->
-      {error, Reason}
-  end.
-
-
-
-%% REMOVE
-os_cmd(Cmd) ->
-  try
-    Port = erlang:open_port({spawn_executable, Cmd}, [exit_status]),
-    Res = os_cmd_loop(Port, []),
-    true = erlang:close_port(Port)
-  catch
-    _C:R ->
-      {error, R}
-  end.
-
-os_cmd_loop(Port, Data0) ->
-  receive
-    {Port, {data, Data}} ->
-      os_cmd_loop(Port, Data0 ++ Data);
-    {Port, {exit_status, Status}} ->
-      {ok, Status};
-    {'EXIT', Port, Reason} ->
-      {error, Reason}
+    {Port, {data, Data}}          -> do_pygmentize_loop(Port, Data ++ NewData);
+    {Port, {exit_status, Status}} -> {ok, Status, Data};
+    {'EXIT', Port, Reason}        -> {error, Reason}
   end.
