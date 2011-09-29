@@ -58,6 +58,7 @@ handle_call(_, _From, State) ->
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
+%% TODO Handle receive messages by handle_info, not with the _loop! <- Same process
 handle_info(_Info, State) ->
   {noreply, State}.
 
