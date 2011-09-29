@@ -72,6 +72,7 @@ do_pygmentize(Cmd, Args, Payload) ->
   try
     Port = erlang:open_port({spawn_executable, Cmd}, Conf),
     true = erlang:port_command(Port, Payload),
+    %% TODO Send "finish"/^D command
     Res0 = do_pygmentize_loop(Port, []),
     true = erlang:port_close(Port),
     Res0
