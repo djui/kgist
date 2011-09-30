@@ -3,6 +3,7 @@ all: compile
 compile: deps
 	./rebar compile
 
+.PHONY: deps
 deps:
 	./rebar get-deps
 
