@@ -63,7 +63,10 @@ handle_call(_, _From, State) ->
 handle_cast(_Msg, State) ->
   {noreply, State}.
 
-handle_info(_Info, State) ->
+handle_info({'EXIT', _Pid, shutdown}, State) ->
+  {noreply, State};
+handle_info(Info, State) ->
+  error_logger:format("Got unknown info: ~p~n", [Info]),
   {noreply, State}.
 
 terminate(_Reason, _State) ->
