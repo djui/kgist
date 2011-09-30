@@ -31,6 +31,7 @@ start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 init([]) ->
+  process_flag(trap_exit, true),
   DefaultLanguage = application:get_env(default_language),
   Cmd   = os:find_executable("pygmentize"),
   Flags = [ {language,    arg("-l", DefaultLanguage)}
