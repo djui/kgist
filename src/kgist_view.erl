@@ -21,6 +21,7 @@
 
 %%% Defines ====================================================================
 -define(SERVER, ?MODULE).
+-define(is_dict(D), (is_tuple(D) andalso element(1, D) =:= dict)).
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
@@ -41,7 +42,11 @@ init([]) ->
              , views    = Views
              }}.
 
-handle_call({render, ViewId, ViewCtx}, _From, State=#state{views=Views}) ->
+handle_call({render, ViewId, ViewCtx0}, _From, State=#state{views=Views}) ->
+  ViewCtx = case ?is_dict(ViewCtx0) of
+              true  -> ViewCtx0;
+              false -> dict:from_list(ViewCtx0)
+            end,
   View    = dict:fetch(ViewId, Views),
   Content = do_render(View, ViewCtx),
   {reply, Content, State};
