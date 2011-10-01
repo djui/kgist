@@ -32,7 +32,7 @@ start_link() ->
 
 init([]) ->
   process_flag(trap_exit, true),
-  DefaultLanguage = application:get_env(default_language),
+  {ok, DefaultLanguage} = application:get_env(default_language),
   Cmd   = os:find_executable("pygmentize"),
   Flags = [ {language,    arg("-l", DefaultLanguage)}
           , {out_format,  arg("-f", "html")}
