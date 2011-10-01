@@ -6,9 +6,9 @@
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/syntax_github.css" />
   <link rel="stylesheet" href="css/formalize.css" />
-  <script src="js/jquery-1.5.2.min.js"></script>
   <script src="js/modernizr-1.7.min.js"></script>
-  <script src="js/jquery.formalize.min.js"></script>
+  <script src="js/jquery-1.6.4.min.js"></script>
+  <script src="js/jquery.formalize-1.1.min.js"></script>
 </head>
 
 <body>
@@ -21,6 +21,24 @@
     <div class="flash_error">{{error}}</div>
     <div class="flash_info">{{info}}</div>
     {{/messages}}
+
+    <div id="recent_gists">
+      <h1>Recent</h1>
+      {{#gists}}
+      <ul id="recent_list">
+        <li>
+          Gist <a href="/{{id}}">{{id}}</a> by {{author}}<br/>
+          <span class="description">{{description}}</span>
+        </li>
+      </ul>
+      {{/gists}}
+    </div>
+    
+    <!--
+    <form action="/">
+      <input type="submit" value="&larr; Overview" />
+    </form>
+    -->
 
     {{{body}}}
 
