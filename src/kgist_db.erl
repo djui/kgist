@@ -1,11 +1,16 @@
 -module(kgist_db).
 
 %%% Exports ====================================================================
--export([ ensure_initialized/0
+-export([ default/0
+        , ensure_initialized/0
         , get/1
+        , get_since/1
         , migrate/0
         , backup/1
         ]).
+
+%%% Imports ====================================================================
+-import(tulib_calendar, [ unix_timestamp/1 ]).
 
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
@@ -49,12 +54,27 @@ ensure_tables(Tables) ->
            end,
   lists:foreach(Create, Tables).
 
+default() ->
+  {ok, DefaultLanguage} = application:get_env(default_language),
+  #gist{ language = DefaultLanguage
+       }.
+
 get(Id) ->
   case mnesia:dirty_read(?GIST_TABLE, Id) of
     []             -> {error, not_found};
     {aborted, Err} -> {error, Err};
     [R]            -> {ok, R}
   end.
+
+get_since({_,_,_}=D) -> get_since(unix_timestamp(D));
+get_since(SinceTS) ->
+  MatchHead = #gist{ creation_time='$1'
+                   , archived=false
+                   , _= '_'
+                   },
+  Guard = {'>=', '$1', SinceTS},
+  Result = '$_',
+  mnesia:dirty_select(?GIST_TABLE, [{MatchHead, [Guard], [Result]}]).
 
 migrate() ->
   {ok, DBDir} = application:get_env(mnesia, dir),
@@ -145,7 +165,7 @@ migrate_from_node(DBFilename) ->
                      _ -> Expires0
                    end,
         HlCode   = HlCode0,
-        CTime    = CTime0,
+        CTime    = CTime0 div 1000, % ms -> s
         Id       = list_to_integer(Id0),
         Archived = case Archived0 of
                      undefined -> false;
