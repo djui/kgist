@@ -1,10 +1,10 @@
 #!/bin/sh
 
 cd $(dirname $0)
-exec erl -sname kgist                   \
-         -pa $PWD/ebin $PWD/deps/*/ebin \
-         -heart                         \
-         -init_debug                    \
-         -boot start_sasl               \
+exec erl -pa $PWD/ebin $PWD/deps/*/ebin \
+         -sname kgist                   \
+         -s kgist                       \
          -config dev                    \
-         -s kgist
+#         -heart                         \
+#         -init_debug                    \
+#         -boot start_sasl
