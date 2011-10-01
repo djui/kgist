@@ -4,7 +4,16 @@
 -export([ init/1 ]).
 -export([ allowed_methods/2
         , content_types_provided/2
+        , content_types_accepted/2
+        , create_path/2
+        , delete_resource/2
+        , delete_completed/2
+        , encodings_provided/2
+        , expires/2
+        , generate_etag/2
         , is_gist/1
+        , last_modified/2
+        , post_is_create/2
         , resource_exists/2
         , to_html/2
         , to_text/2
@@ -27,12 +36,44 @@ init(Config) ->
     
 %%% Callbacks ------------------------------------------------------------------
 allowed_methods(ReqData, Ctx) ->
-  {['HEAD', 'GET', 'DELETE'], ReqData, Ctx}.
+  {['HEAD', 'GET', 'PUT', 'POST', 'DELETE'], ReqData, Ctx}.
 
 content_types_provided(ReqData, Ctx) ->
   {[ {"text/plain", to_text}
    , {"text/html",  to_html}
    ], ReqData, Ctx}.
+
+content_types_accepted(ReqData, Ctx) ->
+  {[ {"text/plain", from_text}
+   , {"text/html", from_html}
+   ], ReqData, Ctx}.
+
+create_path(ReqData, Ctx) ->
+  _Value = wrq:req_body(ReqData),
+  {{error, xxx}, ReqData, Ctx}.
+
+encodings_provided(ReqData, Ctx) ->
+  {[ {"identity", fun(X) -> X end}
+   , {"gzip",     fun(X) -> zlib:gzip(X) end}
+   ], ReqData, Ctx}.
+
+delete_resource(ReqData, Ctx) ->
+  {true, ReqData, Ctx}.
+
+delete_completed(ReqData, Ctx) ->
+  {true, ReqData, Ctx}.
+
+expires(ReqData, Ctx) ->
+  {undefined, ReqData, Ctx}.
+
+generate_etag(ReqData, Ctx) ->
+  {undefined, ReqData, Ctx}.
+
+last_modified(ReqData, Ctx) ->
+  {undefined, ReqData, Ctx}.
+
+post_is_create(ReqData, Ctx) ->
+  {true, ReqData, Ctx}.
 
 resource_exists(ReqData, Ctx) ->
   Id = wrq:path_info(id, ReqData),
