@@ -31,7 +31,7 @@ allowed_methods(ReqData, Ctx) ->
 
 content_types_provided(ReqData, Ctx) ->
   {[ {"text/plain", to_text}
-   , {"text/html", to_html}
+   , {"text/html",  to_html}
    ], ReqData, Ctx}.
 
 resource_exists(ReqData, Ctx) ->
@@ -47,7 +47,7 @@ to_text(ReqData0, Ctx=#ctx{action=download, resource=Gist}) ->
                                 "attachment; filename=" ++ Gist#gist.filename,
                                 ReqData0),
   Text = Gist#gist.code,
-  {Text, ReqData, Ctx};  
+  {Text, ReqData, Ctx};
 to_text(ReqData, Ctx=#ctx{resource=Gist}) ->
   Text = Gist#gist.code,
   {Text, ReqData, Ctx}.
@@ -62,7 +62,7 @@ to_html(ReqData, Ctx=#ctx{action=show, resource=Gist}) ->
                           ]),
   HBody = kgist_view:render(index, TplCtx),
   {HBody, ReqData, Ctx}.
-  
+
 is_gist(ReqData) ->
   Id = wrq:path_info(id, ReqData),
   case gist_id(Id) of
