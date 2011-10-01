@@ -2,10 +2,9 @@
 
 %%% Exports ====================================================================
 -export([ init/1 ]).
--export([ accept_content/2
-        , allowed_methods/2
+-export([ allowed_methods/2
         , content_types_provided/2
-        , content_types_accepted/2
+        , encodings_provided/2
         , generate_etag/2
         , last_modified/2
         , provide_content/2
@@ -24,49 +23,33 @@
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
-init(ConfigProps) ->
-  {root, Root} = proplists:lookup(root, ConfigProps),
-  {ok, #ctx{root=Root}}.
+init(Config) ->
+  Root      = proplists:get_value(root, Config),
+  {ok, App} = application:get_application(),
+  PrivDir   = code:priv_dir(App),
+  AbsRoot   = filename:absname(Root, PrivDir),
+  {ok, #ctx{root=AbsRoot}}.
 
 %%% Callbacks ------------------------------------------------------------------
-accept_content(ReqData, Ctx) ->
-  Path = wrq:disp_path(ReqData),
-  FP = file_path(Ctx, Path),
-  ok = filelib:ensure_dir(FP),
-  ReqData1 = case file_exists(Ctx, Path) of
-               {true, _} ->
-                 ReqData;
-               _ ->
-                 LOC = "http://" ++ wrq:get_req_header("host", ReqData) ++ "/fs/" ++ Path,
-                 wrq:set_resp_header("Location", LOC, ReqData)
-             end,
-  Value = wrq:req_body(ReqData1),
-  case file:write_file(FP, Value) of
-    ok  -> {true, wrq:set_resp_body(Value, ReqData1), Ctx};
-    Err -> {{error, Err}, ReqData1, Ctx}
-  end.    
-
 allowed_methods(ReqData, Ctx) ->
   {['HEAD', 'GET'], ReqData, Ctx}.
 
 content_types_provided(ReqData, Ctx) ->
   CT = webmachine_util:guess_mime(wrq:disp_path(ReqData)),
-  {[{CT, provide_content}], ReqData, Ctx#ctx{metadata=[{'content-type', CT}|Ctx#ctx.metadata]}}.
+  {[{CT, provide_content}], ReqData, Ctx#ctx{metadata=[{ 'content-type'
+                                                       , CT
+                                                       }|Ctx#ctx.metadata]}}.
 
-content_types_accepted(ReqData, Ctx) ->
-  CT = case wrq:get_req_header("content-type", ReqData) of
-         undefined -> "application/octet-stream";
-         X         -> X
-       end,
-  {MT, _Params} = webmachine_util:media_type_to_detail(CT),
-  {[{MT, accept_content}], ReqData, Ctx#ctx{metadata=[{'content-type', MT}|Ctx#ctx.metadata]}}.
+encodings_provided(ReqData, Ctx) ->
+  {[ {"identity", fun(X) -> X end}
+   , {"gzip",     fun(X) -> zlib:gzip(X) end}
+   ], ReqData, Ctx}.
 
 generate_etag(ReqData, Ctx) ->
   case maybe_fetch_object(Ctx, wrq:disp_path(ReqData)) of
     {true, BodyCtx} ->
       ETag = hash_body(BodyCtx#ctx.response_body),
-      {ETag, ReqData,
-       BodyCtx#ctx{metadata=[{etag,ETag}| BodyCtx#ctx.metadata]}};
+      {ETag, ReqData, BodyCtx#ctx{metadata=[{etag,ETag}|BodyCtx#ctx.metadata]}};
     _ ->
       {undefined, ReqData, Ctx}
   end.
@@ -74,16 +57,9 @@ generate_etag(ReqData, Ctx) ->
 last_modified(ReqData, Ctx) ->
   {true, FullPath} = file_exists(Ctx, wrq:disp_path(ReqData)),
   LMod = filelib:last_modified(FullPath),
-  {LMod, ReqData, Ctx#ctx{metadata=[{'last-modified', httpd_util:rfc1123_date(LMod)}| Ctx#ctx.metadata]}}.
-
-provide_content(ReqData, Ctx) ->
-  case maybe_fetch_object(Ctx, wrq:disp_path(ReqData)) of
-    {true, NewCtx} ->
-      Body = NewCtx#ctx.response_body,
-      {Body, ReqData, Ctx};
-    {false, NewCtx} ->
-      {error, ReqData, NewCtx}
-  end.
+  {LMod, ReqData, Ctx#ctx{metadata=[{ 'last-modified'
+                                    , httpd_util:rfc1123_date(LMod)
+                                    }|Ctx#ctx.metadata]}}.
 
 resource_exists(ReqData, Ctx) ->
   Path = wrq:disp_path(ReqData),
@@ -93,15 +69,13 @@ resource_exists(ReqData, Ctx) ->
   end.
 
 %%% Internals ------------------------------------------------------------------
-file_path(_Ctx, [])         -> false;
-file_path(Ctx,  ["/"|Name]) -> file_path(Ctx, Name);
-file_path(Ctx,  RelName)    -> filename:join([Ctx#ctx.root, RelName]).
-
-file_exists(Ctx, Name) ->
-  NamePath = file_path(Ctx, Name),
-  case filelib:is_regular(NamePath) of
-    true  -> {true, NamePath};
-    false -> false
+provide_content(ReqData, Ctx) ->
+  case maybe_fetch_object(Ctx, wrq:disp_path(ReqData)) of
+    {true, NewCtx} ->
+      Body = NewCtx#ctx.response_body,
+      {Body, ReqData, Ctx};
+    {false, NewCtx} ->
+      {error, ReqData, NewCtx}
   end.
 
 maybe_fetch_object(Ctx, Path) ->
@@ -118,6 +92,17 @@ maybe_fetch_object(Ctx, Path) ->
     _Body ->
       {true, Ctx}
   end.
+
+file_exists(Ctx, Name) ->
+  NamePath = file_path(Ctx, Name),
+  case filelib:is_regular(NamePath) of
+    true  -> {true, NamePath};
+    false -> false
+  end.
+
+file_path(_Ctx,          "") -> undefined;
+file_path(Ctx,    "/"++Name) -> file_path(Ctx, Name);
+file_path(Ctx,      RelName) -> filename:join([Ctx#ctx.root, RelName]).
 
 hash_body(Body) ->
   mochihex:to_hex(binary_to_list(crypto:sha(Body))).
