@@ -33,7 +33,7 @@
 init(Config) ->
   Action = proplists:get_value(action, Config, show),
   {ok, #ctx{action=Action}}.
-    
+
 %%% Callbacks ------------------------------------------------------------------
 allowed_methods(ReqData, Ctx) ->
   {['HEAD', 'GET', 'PUT', 'POST', 'DELETE'], ReqData, Ctx}.
@@ -98,10 +98,12 @@ to_html(ReqData, Ctx=#ctx{action=raw}) ->
 to_html(ReqData, Ctx=#ctx{action=download}) ->
   to_text(ReqData, Ctx);
 to_html(ReqData, Ctx=#ctx{action=show, resource=Gist}) ->
-  TplCtx = dict:from_list([ {id,      Gist#gist.id}
-                          , {hl_code, Gist#gist.code_highlighted}
-                          ]),
-  HBody = kgist_view:render(index, TplCtx),
+  ViewCtx   = dict:from_list([ {id,      Gist#gist.id}
+                             , {hl_code, Gist#gist.code_highlighted}
+                             ]),
+  Body      = kgist_view:render(gist_view, ViewCtx),
+  LayoutCtx = [{page_title, ""}, {body, Body}],
+  HBody     = kgist_view:render(layout, LayoutCtx),
   {HBody, ReqData, Ctx}.
 
 is_gist(ReqData) ->
