@@ -102,6 +102,7 @@ file_exists(Ctx, Name) ->
 
 file_path(_Ctx,          "") -> undefined;
 file_path(Ctx,    "/"++Name) -> file_path(Ctx, Name);
+file_path(Ctx,  "../"++Name) -> file_path(Ctx, Name);
 file_path(Ctx,      RelName) -> filename:join([Ctx#ctx.root, RelName]).
 
 hash_body(Body) ->
