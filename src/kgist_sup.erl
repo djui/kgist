@@ -28,16 +28,20 @@ init([]) ->
                , {webmachine_mochiweb, start, [WebConfig]}
                , permanent, 5000, worker, dynamic
                },
-  ViewServer = { kgist_view
-               , {kgist_view, start_link, []}
-               , permanent, 5000, worker, [kgist_view]
-               },
-  RenderServer = { pygments
-                 , {pygments, start_link, []}
-                 , permanent, 5000, worker, [pygments]
-                 },
+  {ok, ViewDir} = application:get_env(view_dir),
+  MustacheConfig = [ {view_dir, ViewDir}
+                   , {layout_view, layout}
+                   ],
+  MustacheServer = { kgist_view
+                   , {kgist_view, start_link, [MustacheConfig]}
+                   , permanent, 5000, worker, [kgist_view]
+                   },
+  PygmentsServer = { pygments
+                   , {pygments, start_link, []}
+                   , permanent, 5000, worker, [pygments]
+                   },
   SupTree = {{one_for_one, 10, 10}, [ Webmachine
-                                    , ViewServer
-                                    , RenderServer
+                                    , MustacheServer
+                                    , PygmentsServer
                                     ]},
   {ok, SupTree}.
