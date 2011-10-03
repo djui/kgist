@@ -4,6 +4,9 @@
 %%% Exports ====================================================================
 -export([ start_link/0
         , pygmentize/2
+        , lang_alias/1
+        , lang_mime/1
+        , lang_ext/1
         ]).
 -export([ init/1
         , handle_call/3
@@ -15,7 +18,8 @@
 
 %%% Records ====================================================================
 -record(state, { cmd
-               , flags
+               , flags     = []
+               , languages = []
                }).
 
 %%% Defines ====================================================================
@@ -26,6 +30,15 @@
 pygmentize(Language, CodeText) ->
   gen_server:call(?SERVER, {pygmentize, Language, CodeText}).
 
+lang_alias(Language) ->
+  gen_server:call(?SERVER, {lang_alias, Language}).
+
+lang_mime(Language) ->
+  gen_server:call(?SERVER, {lang_mime, Language}).
+
+lang_ext(Language) ->
+  gen_server:call(?SERVER, {lang_ext, Language}).
+
 %%% Callbacks ------------------------------------------------------------------
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -33,6 +46,8 @@ start_link() ->
 init([]) ->
   process_flag(trap_exit, true),
   {ok, DefaultLanguage} = application:get_env(default_language),
+  LanguagesPath         = filename:join([code:priv_dir(), "languages.eterm"]),
+  {ok, Languages}       = file:consult(LanguagesPath),
   Cmd   = os:find_executable("pygmentize"),
   Flags = [ {language,    arg("-l", DefaultLanguage)}
           , {out_format,  arg("-f", "html")}
@@ -43,8 +58,9 @@ init([]) ->
                                        , param("anchorlinenos", "true")
                                        ])}
           ],
-  {ok, #state{ cmd   = Cmd
-             , flags = orddict:from_list(Flags)
+  {ok, #state{ cmd       = Cmd
+             , flags     = orddict:from_list(Flags)
+             , languages = Languages
              }}.
 
 handle_call({pygmentize, Language, CodeText}, _From,
@@ -57,6 +73,15 @@ handle_call({pygmentize, Language, CodeText}, _From,
   true    = stdinout:shutdown(S),
   HLCode  = binary_to_list(Res),
   {reply, HLCode, State};
+handle_call({lang_alias, Language}, _From, State=#state{languages=Languages}) ->
+  TODO
+  {reply, Alias, State};
+handle_call({lang_mime, Language}, _From, State=#state{languages=Languages}) ->
+  TODO
+  {reply, Mime, State};
+handle_call({lang_ext, Language}, _From, State=#state{languages=Languages}) ->
+  TODO
+  {reply, Ext, State};
 handle_call(_, _From, State) ->
   {reply, undefined, State}.
 
