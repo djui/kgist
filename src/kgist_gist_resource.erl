@@ -3,6 +3,7 @@
 %%% Exports ====================================================================
 -export([ init/1 ]).
 -export([ allowed_methods/2
+        , allow_missing_post/2
         , content_types_provided/2
         , content_types_accepted/2
         , create_path/2
@@ -10,6 +11,7 @@
         , delete_completed/2
         , encodings_provided/2
         , expires/2
+        , from_form/2
         , generate_etag/2
         , is_gist/1
         , last_modified/2
@@ -32,11 +34,15 @@
 %%% API ------------------------------------------------------------------------
 init(Config) ->
   Action = proplists:get_value(action, Config, show),
-  {ok, #ctx{action=Action}}.
+  %{ok, #ctx{action=Action}}.
+  {{trace, "/tmp"}, #ctx{action=Action}}.
 
 %%% Callbacks ------------------------------------------------------------------
 allowed_methods(ReqData, Ctx) ->
-  {['HEAD', 'GET', 'PUT', 'POST', 'DELETE'], ReqData, Ctx}.
+  {['HEAD', 'GET', 'POST', 'PUT', 'DELETE'], ReqData, Ctx}.
+
+allow_missing_post(ReqData, Ctx) ->
+  {true, ReqData, Ctx}.
 
 content_types_provided(ReqData, Ctx) ->
   {[ {"text/plain", to_text}
@@ -44,13 +50,12 @@ content_types_provided(ReqData, Ctx) ->
    ], ReqData, Ctx}.
 
 content_types_accepted(ReqData, Ctx) ->
-  {[ {"text/plain", from_text}
-   , {"text/html", from_html}
+  {[ {"application/x-www-form-urlencoded", from_form}
    ], ReqData, Ctx}.
 
 create_path(ReqData, Ctx) ->
-  _Value = wrq:req_body(ReqData),
-  {{error, xxx}, ReqData, Ctx}.
+  Id = kgist_db:next_id(),
+  {integer_to_list(Id), ReqData, Ctx}.
 
 encodings_provided(ReqData, Ctx) ->
   {[ {"identity", fun(X) -> X end}
@@ -66,6 +71,18 @@ delete_completed(ReqData, Ctx) ->
 expires(ReqData, Ctx) ->
   {undefined, ReqData, Ctx}.
 
+from_form(ReqData, Ctx) ->
+  Body = wrq:req_body(ReqData),
+  Vals = mochiweb_util:parse_qs(Body),
+  io:format("~p~n", [Vals]), %% TODO Evaluate fields
+  
+  case spec(Vals) of
+    ok ->
+      {true, wrq:set_resp_body("xxx", ReqData), Ctx};
+    Err ->
+      {{error, Err}, ReqData, Ctx}
+  end. 
+
 generate_etag(ReqData, Ctx) ->
   {undefined, ReqData, Ctx}.
 
@@ -77,16 +94,17 @@ post_is_create(ReqData, Ctx) ->
 
 resource_exists(ReqData, Ctx) ->
   Id = wrq:path_info(id, ReqData),
-  {ok, GistId} = gist_id(Id),
-  case kgist_db:get(GistId) of
-    {ok, Gist} -> {true, ReqData, Ctx#ctx{resource=Gist}};
-    {error, _} -> {false, ReqData, Ctx}
+  case gist_id(Id) of
+    error        -> {false, ReqData, Ctx};
+    {ok, GistId} ->
+      case kgist_db:get(GistId) of
+        {ok, Gist} -> {true, ReqData, Ctx#ctx{resource=Gist}};
+        {error, _} -> {false, ReqData, Ctx}
+      end
   end.
-
+        
 to_text(ReqData0, Ctx=#ctx{action=download, resource=Gist}) ->
-  ReqData = wrq:set_resp_header("content-disposition",
-                                "attachment; filename=" ++ Gist#gist.filename,
-                                ReqData0),
+  ReqData = attachment(Gist#gist.filename, ReqData0),
   Text = Gist#gist.code,
   {Text, ReqData, Ctx};
 to_text(ReqData, Ctx=#ctx{resource=Gist}) ->
@@ -98,12 +116,11 @@ to_html(ReqData, Ctx=#ctx{action=raw}) ->
 to_html(ReqData, Ctx=#ctx{action=download}) ->
   to_text(ReqData, Ctx);
 to_html(ReqData, Ctx=#ctx{action=show, resource=Gist}) ->
-  ViewCtx   = dict:from_list([ {id,      Gist#gist.id}
-                             , {hl_code, Gist#gist.code_highlighted}
-                             ]),
-  Body      = kgist_view:render(gist_view, ViewCtx),
-  LayoutCtx = [{page_title, ""}, {body, Body}],
-  HBody     = kgist_view:render(layout, LayoutCtx),
+  ViewCtx = [ {id,         Gist#gist.id}
+            , {hl_code,    Gist#gist.code_highlighted}
+            , {page_title, Gist#gist.id}
+            ],
+  HBody   = kgist_view:render(gist_view, ViewCtx),
   {HBody, ReqData, Ctx}.
 
 is_gist(ReqData) ->
@@ -122,7 +139,22 @@ gist_id(S) ->
       case GistId >= 1000 andalso GistId =< 9999 of
         true  -> {ok, GistId};
         false -> error
-      end;
-    _ ->
-      error
+      end
   end.
+
+attachment(Filename, ReqData) ->
+  wrq:set_resp_header("content-disposition",
+                      "attachment; filename=" ++ Filename,
+                      ReqData).
+
+spec(Vals) ->
+  %% ETL Style!
+  %% Extract
+  Description = proplists:get_value("description", Vals, ""),
+  Language    = proplists:get_value("language",    Vals, ""),
+  Code        = proplists:get_value("code",        Vals, ""),
+  Author      = proplists:get_value("author",      Vals, ""),
+  Expires     = proplists:get_value("expires",     Vals, ""),
+  %% Translate
+  
+  %% Load

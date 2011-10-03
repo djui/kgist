@@ -4,8 +4,8 @@
 -export([ init/1 ]).
 -export([ allowed_methods/2
         , content_types_provided/2
+        , encodings_provided/2
         , to_html/2
-        , to_text/2
         ]).
 
 
@@ -23,29 +23,27 @@
 %%% API ------------------------------------------------------------------------
 init(_Config) ->
   {ok, #ctx{}}.
-    
+  
 %%% Callbacks ------------------------------------------------------------------
 allowed_methods(ReqData, Ctx) ->
-  {['HEAD', 'GET', 'POST', 'PUT'], ReqData, Ctx}.
+  {['HEAD', 'GET'], ReqData, Ctx}.
 
 content_types_provided(ReqData, Ctx) ->
-  {[ {"text/plain", to_text}
-   , {"text/html",  to_html}
+  {[{"text/html", to_html}], ReqData, Ctx}.
+
+encodings_provided(ReqData, Ctx) ->
+  {[ {"identity", fun(X) -> X end}
+   , {"gzip",     fun(X) -> zlib:gzip(X) end}
    ], ReqData, Ctx}.
 
-to_text(ReqData, Ctx) ->
-  Text = "TEXT",
-  {Text, ReqData, Ctx}.
-
 to_html(ReqData, Ctx) ->
-  Now         = unix_timestamp(erlang:now()),
-  OneWeek     = 604800, %% 7*24*60*60
-  LastWeek    = Now - OneWeek,
-  RecentGists = kgist_db:get_since(LastWeek),
-  ViewCtx   = [{gists, RecentGists}, {gist, kgist_db:default()}],
-  Body      = kgist_view:render(gist_new, ViewCtx),
-  LayoutCtx = [{page_title, ""}, {body, Body}],
-  HBody     = kgist_view:render(layout, LayoutCtx),
+  Now      = unix_timestamp(erlang:now()),
+  OneWeek  = 604800, %% 7*24*60*60
+  LastWeek = Now - OneWeek,
+  Recents  = kgist_db:get_since(LastWeek),
+  ViewCtx  = [ {gists, Recents}
+             , {gist, kgist_db:default()}
+             , {page_title, ""}
+             ],
+  HBody    = kgist_view:render(gist_new, ViewCtx),
   {HBody, ReqData, Ctx}.
-
-%%% Internals ------------------------------------------------------------------
