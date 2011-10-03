@@ -6,6 +6,7 @@
         , get/1
         , get_since/1
         , migrate/0
+        , next_id/0
         , backup/1
         ]).
 
@@ -56,8 +57,30 @@ ensure_tables(Tables) ->
 
 default() ->
   {ok, DefaultLanguage} = application:get_env(default_language),
-  #gist{ language = DefaultLanguage
+  #gist{ creation_time    = unix_timestamp(now())
+    %% , expires          = undefined
+       , archived         = false
+       , language         = DefaultLanguage
+    %% , author           = undefined
+       , filename         = "gistfile1." ++ TODO extension
+    %% , description      = undefined
+    %% , irc              = undefined
+    %% , code             = undefined
+    %% , code_highlighted = undefined
        }.
+-record(gist, { id
+              , creation_time
+              , expires
+              , archived
+              , language
+              , author
+              , filename
+              , description
+              , irc
+              , code
+              , code_highlighted
+              }).
+
 
 get(Id) ->
   case mnesia:dirty_read(?GIST_TABLE, Id) of
@@ -76,6 +99,19 @@ get_since(SinceTS) ->
   Result = '$_',
   mnesia:dirty_select(?GIST_TABLE, [{MatchHead, [Guard], [Result]}]).
 
+next_id() ->
+  %% HACK!
+  UpdateCounter =
+    fun() ->
+        [GistCounter] = mnesia:read(?GIST_TABLE, ?GIST_KEY_COUNTER),
+        NewVal = GistCounter#gist.creation_time+1,
+        NewGistCounter = GistCounter#gist{creation_time=NewVal},
+        mnesia:write(?GIST_TABLE, NewGistCounter, write),
+        NewVal
+    end,
+  {atomic, NewVal} = mnesia:transaction(UpdateCounter),
+  NewVal.
+    
 migrate() ->
   {ok, DBDir} = application:get_env(mnesia, dir),
   %% Migrate old node.js database
