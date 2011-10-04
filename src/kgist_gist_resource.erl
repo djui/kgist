@@ -69,16 +69,19 @@ expires(ReqData, Ctx) ->
   {undefined, ReqData, Ctx}.
 
 from_form(ReqData, Ctx) ->
-  Body = wrq:req_body(ReqData),
-  Vals = mochiweb_util:parse_qs(Body),
-  io:format("~p~n", [Vals]), %% TODO Evaluate fields
-  
-  case spec(Vals) of
+  %% TODO Set author cookie
+  Id      = Ctx#ctx.id,
+  ReqBody = wrq:req_body(ReqData),
+  Vals    = mochiweb_util:parse_qs(ReqBody),
+  {ok, Gist} = spec(Vals),
+  case kgist_db:put(Id, Gist) of
     ok ->
-      {true, wrq:set_resp_body("xxx", ReqData), Ctx};
-    Err ->
-      {{error, Err}, ReqData, Ctx}
-  end. 
+      ResBody  = "Gist " ++ integer_to_list(Id) ++ " added",
+      Response = wrq:set_resp_body(ResBody, ReqData),
+      {true, Response, Ctx};
+    {error, Err} ->
+      {Err, ReqData, Ctx}
+  end.
 
 generate_etag(ReqData, Ctx) ->
   {undefined, ReqData, Ctx}.
