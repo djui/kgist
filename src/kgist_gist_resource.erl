@@ -76,6 +76,7 @@ from_form(ReqData, Ctx) ->
   {ok, Gist} = spec(Vals),
   case kgist_db:put(Id, Gist) of
     ok ->
+      %% TODO set redirect to serve new gist
       ResBody  = "Gist " ++ integer_to_list(Id) ++ " added",
       Response = wrq:set_resp_body(ResBody, ReqData),
       {true, Response, Ctx};
