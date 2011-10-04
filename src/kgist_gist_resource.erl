@@ -150,13 +150,56 @@ attachment(Filename, ReqData) ->
                       ReqData).
 
 spec(Vals) ->
-  %% ETL Style!
+  %% ETL Style
   %% Extract
-  Description = proplists:get_value("description", Vals, ""),
-  Language    = proplists:get_value("language",    Vals, ""),
-  Code        = proplists:get_value("code",        Vals, ""),
-  Author      = proplists:get_value("author",      Vals, ""),
-  Expires     = proplists:get_value("expires",     Vals, ""),
+  Author0  = proplists:get_value("author",      Vals),
+  Code0    = proplists:get_value("code",        Vals),
+  Desc0    = proplists:get_value("description", Vals),
+  Expires0 = proplists:get_value("expires",     Vals),
+  Irc0     = proplists:get_value("irc",         Vals),
+  File0    = proplists:get_value("filename",    Vals),
+  Lang0    = proplists:get_value("language",    Vals),
   %% Translate
-  
+  Author   = convert([non_empty, {max, 32}], Author0),
+  Code     = convert([non_empty, {max, 1048576}], Code0),
+  Expires  = convert([{in, ["1h","1d","1w","1m","1y"]}], Expires0),
+  Desc     = convert([non_empty, {max, 1024}], Desc0),
+  Lang     = convert([{fun pygments:lang_exists/1, "Text only"}], Lang0),
+  DefFile  = "gistfile" ++ hd(pygments:lang_ext(Lang)),
+  File     = convert([{non_empty, DefFile}], File0),
+  Irc      = convert([{min, 2}, fun(["#"|_]) -> true; (_) -> false end], Irc0),
+  HlCode   = pygments:pygmentize(Lang, Code),
   %% Load
+  Gist = #gist{ creation_time    = unix_timestamp(now())
+              , expires          = Expires
+              , archived         = false
+              , language         = Lang
+              , author           = Author
+              , filename         = File
+              , description      = Desc
+              , irc              = Irc
+              , code             = Code
+              , code_highlighted = HlCode
+              },
+  {ok, Gist}.
+
+convert([], S)         -> S;
+convert(_,  undefined) -> undefined;
+convert([non_empty|Rules], S) ->
+  convert([{non_empty, undefined}|Rules], S);
+convert([{non_empty, Def}|Rules], "") ->
+  convert(Rules, Def);
+convert([{min, Len}|Rules], S) ->
+  convert([fun(E) -> length(E) >= Len end|Rules], S);
+convert([{max, Len}|Rules], S) ->
+  convert(Rules, string:substr(S, 1, Len));
+convert([{in, L, Def}|Rules], S) ->
+  convert([{fun(E) -> lists:member(E, L) end, Def}|Rules], S);
+convert([Guard|Rules], S) when is_function(Guard) ->
+  convert([{Guard, undefined}|Rules], S);
+convert([{Guard, Def}|Rules], S) when is_function(Guard) ->
+  case Guard(S) of
+    true  -> convert(Rules, S);
+    false -> convert(Rules, Def)
+  end;
+convert([_|Rules], S) -> convert(Rules, S).
