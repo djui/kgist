@@ -11,6 +11,9 @@
         , resource_exists/2
         ]).
 
+%%% Imports ====================================================================
+-import(tulib_application, [priv_dir/0]).
+
 %%% Includes ===================================================================
 -include_lib("kernel/include/file.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
@@ -24,10 +27,8 @@
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
 init(Config) ->
-  Root      = proplists:get_value(root, Config),
-  {ok, App} = application:get_application(),
-  PrivDir   = code:priv_dir(App),
-  AbsRoot   = filename:absname(Root, PrivDir),
+  Root    = proplists:get_value(root, Config),
+  AbsRoot = filename:absname(Root, priv_dir()),
   {ok, #ctx{root=AbsRoot}}.
 
 %%% Callbacks ------------------------------------------------------------------
