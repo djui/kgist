@@ -4,7 +4,7 @@
 -record(gist, { id
               , creation_time
               , expires
-              , archived
+              , archived         = false
               , language
               , author
               , filename
