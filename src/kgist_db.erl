@@ -1,13 +1,13 @@
 -module(kgist_db).
 
 %%% Exports ====================================================================
--export([ default/0
+-export([ backup/1
         , ensure_initialized/0
         , get/1
         , get_since/1
         , migrate/0
         , next_id/0
-        , backup/1
+        , put/2
         ]).
 
 %%% Imports ====================================================================
@@ -18,6 +18,9 @@
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
+backup(Filename) ->
+  mnesia:backup(Filename).
+
 ensure_initialized() ->
   Node    = node(),
   Tables  = [{?GIST_TABLE, [ {disc_copies, [Node]}
@@ -55,33 +58,6 @@ ensure_tables(Tables) ->
            end,
   lists:foreach(Create, Tables).
 
-default() ->
-  {ok, DefaultLanguage} = application:get_env(default_language),
-  #gist{ creation_time    = unix_timestamp(now())
-    %% , expires          = undefined
-       , archived         = false
-       , language         = DefaultLanguage
-    %% , author           = undefined
-       , filename         = "gistfile1." ++ TODO extension
-    %% , description      = undefined
-    %% , irc              = undefined
-    %% , code             = undefined
-    %% , code_highlighted = undefined
-       }.
--record(gist, { id
-              , creation_time
-              , expires
-              , archived
-              , language
-              , author
-              , filename
-              , description
-              , irc
-              , code
-              , code_highlighted
-              }).
-
-
 get(Id) ->
   case mnesia:dirty_read(?GIST_TABLE, Id) of
     []             -> {error, not_found};
@@ -95,9 +71,16 @@ get_since(SinceTS) ->
                    , archived=false
                    , _= '_'
                    },
-  Guard = {'>=', '$1', SinceTS},
-  Result = '$_',
+  Guard     = {'>=', '$1', SinceTS},
+  Result    = '$_',
   mnesia:dirty_select(?GIST_TABLE, [{MatchHead, [Guard], [Result]}]).
+
+migrate() ->
+  {ok, DBDir} = application:get_env(mnesia, dir),
+  %% Migrate old node.js database
+  maybe_migrate_from_node(filename:join([DBDir, "gist.db"])),
+  %% ...
+  ok.
 
 next_id() ->
   %% HACK!
@@ -112,15 +95,12 @@ next_id() ->
   {atomic, NewVal} = mnesia:transaction(UpdateCounter),
   NewVal.
     
-migrate() ->
-  {ok, DBDir} = application:get_env(mnesia, dir),
-  %% Migrate old node.js database
-  maybe_migrate_from_node(filename:join([DBDir, "gist.db"])),
-  %% ...
-  ok.
-
-backup(Filename) ->
-  mnesia:backup(Filename).
+put(Id, Gist0) ->
+  Gist = Gist0#gist{id=Id},
+  case mnesia:dirty_write(?GIST_TABLE, Gist) of
+    {aborted, Err} -> {error, Err};
+    ok             -> ok
+  end.
 
 %%% Internals ------------------------------------------------------------------
 migrate_schema(DBDir) when is_list(DBDir) ->
