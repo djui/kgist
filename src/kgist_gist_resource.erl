@@ -104,10 +104,12 @@ resource_exists(ReqData, Ctx) ->
   end.
         
 to_text(ReqData0, Ctx=#ctx{action=download, resource=Gist}) ->
+  %% TODO Set content-type
   ReqData = attachment(Gist#gist.filename, ReqData0),
   Text = Gist#gist.code,
   {Text, ReqData, Ctx};
 to_text(ReqData, Ctx=#ctx{resource=Gist}) ->
+  %% TODO Set content-type
   Text = Gist#gist.code,
   {Text, ReqData, Ctx}.
 
@@ -115,7 +117,7 @@ to_html(ReqData, Ctx=#ctx{action=raw}) ->
   to_text(ReqData, Ctx);
 to_html(ReqData, Ctx=#ctx{action=download}) ->
   to_text(ReqData, Ctx);
-to_html(ReqData, Ctx=#ctx{action=show, resource=Gist}) ->
+to_html(ReqData, Ctx=#ctx{resource=Gist}) ->
   ViewCtx = [ {id,         Gist#gist.id}
             , {hl_code,    Gist#gist.code_highlighted}
             , {page_title, Gist#gist.id}
