@@ -9,7 +9,6 @@
         , create_path/2
         , delete_resource/2
         , delete_completed/2
-        , encodings_provided/2
         , expires/2
         , from_form/2
         , generate_etag/2
@@ -21,6 +20,9 @@
         , to_text/2
         ]).
 
+%%% Imports ====================================================================
+-import(tulib_calendar, [unix_timestamp/1]).
+
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
@@ -28,15 +30,15 @@
 %%% Records ====================================================================
 -record(ctx, { action
              , resource
+             , id
              }).
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
 init(Config) ->
-  Action = proplists:get_value(action, Config, show),
-  %{ok, #ctx{action=Action}}.
-  {{trace, "/tmp"}, #ctx{action=Action}}.
-
+  Action = proplists:get_value(action, Config),
+  {ok, #ctx{action=Action}}.
+  
 %%% Callbacks ------------------------------------------------------------------
 allowed_methods(ReqData, Ctx) ->
   {['HEAD', 'GET', 'POST', 'PUT', 'DELETE'], ReqData, Ctx}.
@@ -55,12 +57,7 @@ content_types_accepted(ReqData, Ctx) ->
 
 create_path(ReqData, Ctx) ->
   Id = kgist_db:next_id(),
-  {integer_to_list(Id), ReqData, Ctx}.
-
-encodings_provided(ReqData, Ctx) ->
-  {[ {"identity", fun(X) -> X end}
-   , {"gzip",     fun(X) -> zlib:gzip(X) end}
-   ], ReqData, Ctx}.
+  {integer_to_list(Id), ReqData, Ctx#ctx{id=Id}}.
 
 delete_resource(ReqData, Ctx) ->
   {true, ReqData, Ctx}.
