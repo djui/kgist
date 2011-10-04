@@ -7,6 +7,7 @@
         , lang_alias/1
         , lang_mime/1
         , lang_ext/1
+        , lang_exists/1
         ]).
 -export([ init/1
         , handle_call/3
@@ -15,6 +16,9 @@
         , terminate/2
         , code_change/3
         ]).
+
+%%% Imports ====================================================================
+-import(tulib_application, [priv_file/1]).
 
 %%% Records ====================================================================
 -record(state, { cmd
@@ -33,11 +37,14 @@ pygmentize(Language, CodeText) ->
 lang_alias(Language) ->
   gen_server:call(?SERVER, {lang_alias, Language}).
 
+lang_ext(Language) ->
+  gen_server:call(?SERVER, {lang_ext, Language}).
+
 lang_mime(Language) ->
   gen_server:call(?SERVER, {lang_mime, Language}).
 
-lang_ext(Language) ->
-  gen_server:call(?SERVER, {lang_ext, Language}).
+lang_exists(Language) ->
+  gen_server:call(?SERVER, {lang_exists, Language}).
 
 %%% Callbacks ------------------------------------------------------------------
 start_link() ->
@@ -46,7 +53,7 @@ start_link() ->
 init([]) ->
   process_flag(trap_exit, true),
   {ok, DefaultLanguage} = application:get_env(default_language),
-  LanguagesPath         = filename:join([code:priv_dir(), "languages.eterm"]),
+  LanguagesPath         = priv_file("languages.eterm"),
   {ok, Languages}       = file:consult(LanguagesPath),
   Cmd   = os:find_executable("pygmentize"),
   Flags = [ {language,    arg("-l", DefaultLanguage)}
@@ -64,8 +71,9 @@ init([]) ->
              }}.
 
 handle_call({pygmentize, Language, CodeText}, _From,
-            State=#state{cmd=Cmd0, flags=Flags0}) ->
-  Flags   = orddict:store(language, arg("-l", Language), Flags0),
+            State=#state{cmd=Cmd0, flags=Flags0, languages=Languages}) ->
+  Lexer   = atom_to_list(lang(alias, Language, Languages)),
+  Flags   = orddict:store(language, arg("-l", Lexer), Flags0),
   Args    = orddict:fold(fun(_Key, Value, Acc) -> Value++Acc end, [], Flags),
   Cmd     = string:join([Cmd0|Args], " "),
   {ok, S} = stdinout:start_link(Cmd),
@@ -74,14 +82,17 @@ handle_call({pygmentize, Language, CodeText}, _From,
   HLCode  = binary_to_list(Res),
   {reply, HLCode, State};
 handle_call({lang_alias, Language}, _From, State=#state{languages=Languages}) ->
-  TODO
+  Alias = atom_to_list(lang(alias, Language, Languages)),
   {reply, Alias, State};
-handle_call({lang_mime, Language}, _From, State=#state{languages=Languages}) ->
-  TODO
-  {reply, Mime, State};
 handle_call({lang_ext, Language}, _From, State=#state{languages=Languages}) ->
-  TODO
+  Ext = lang(ext, Language, Languages),
   {reply, Ext, State};
+handle_call({lang_mime, Language}, _From, State=#state{languages=Languages}) ->
+  Mime = lang(mime, Language, Languages),
+  {reply, Mime, State};
+handle_call({lang_exists, Language}, _From, State=#state{languages=Languages}) ->
+  Exists = proplists:is_defined(Language, Languages),
+  {reply, Exists, State};
 handle_call(_, _From, State) ->
   {reply, undefined, State}.
 
@@ -106,3 +117,8 @@ arg(Flag, Value) ->
 
 param(Key, Value) ->
   ["-P", Key ++ "=" ++ Value].
+
+lang(Key, Language, Languages) ->
+  L      = proplists:get_value(Language, Languages, []),
+  Values = proplists:get_value(Key, L, [undefined]),
+  hd(Values).
