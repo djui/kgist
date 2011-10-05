@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <title>kGist {{page_title}}</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/syntax_github.css" />
-  <link rel="stylesheet" href="css/formalize.css" />
-  <script src="js/modernizr-1.7.min.js"></script>
-  <script src="js/jquery-1.6.4.min.js"></script>
-  <script src="js/jquery.formalize-1.1.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/syntax_github.css" />
+  <link rel="stylesheet" href="/css/formalize.css" />
+  <script src="/js/modernizr-1.7.min.js"></script>
+  <script src="/js/jquery-1.6.4.min.js"></script>
+  <script src="/js/jquery.formalize-1.1.min.js"></script>
 </head>
 
 <body>
@@ -27,7 +27,7 @@
       {{#gists}}
       <ul id="recent_list">
         <li>
-          Gist <a href="/{{id}}">{{id}}</a> by {{author}}<br/>
+          Gist <a href="/gist/{{id}}">{{id}}</a> by {{author}}<br/>
           <span class="description">{{description}}</span>
         </li>
       </ul>
