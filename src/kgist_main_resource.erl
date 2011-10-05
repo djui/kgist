@@ -31,13 +31,12 @@ content_types_provided(ReqData, Ctx) ->
   {[{"text/html", to_html}], ReqData, Ctx}.
 
 to_html(ReqData, Ctx) ->
-  Now      = unix_timestamp(erlang:now()),
-  OneWeek  = 604800, %% 7*24*60*60
-  LastWeek = Now - OneWeek,
-  Recents  = kgist_db:get_since(LastWeek),
-  ViewCtx  = [ {gists, Recents}
-             , {gist, ""} %% TODO Set default values
-             , {page_title, ""}
-             ],
-  HBody    = kgist_view:render(gist_new, ViewCtx),
+  Recents = kgist_view:to_list(kgist_db:recents()),
+  ViewCtx = [ {gists, Recents}
+            , {gist, "Foo"} %% TODO Set default values
+            , {page_title, ""}
+            ],
+  HBody   = kgist_view:render(gist_new, ViewCtx),
   {HBody, ReqData, Ctx}.
+
+%%% Internals ------------------------------------------------------------------
