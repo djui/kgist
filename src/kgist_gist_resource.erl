@@ -21,7 +21,9 @@
         ]).
 
 %%% Imports ====================================================================
--import(tulib_calendar, [unix_timestamp/1]).
+-import(tulib_calendar, [unix_timestamp/0
+                        ,unix_timestamp/1
+                        ]).
 
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
@@ -119,9 +121,18 @@ to_html(ReqData, Ctx=#ctx{action=raw}) ->
 to_html(ReqData, Ctx=#ctx{action=download}) ->
   to_text(ReqData, Ctx);
 to_html(ReqData, Ctx=#ctx{resource=Gist}) ->
-  ViewCtx = [ {id,         Gist#gist.id}
-            , {hl_code,    Gist#gist.code_highlighted}
-            , {page_title, Gist#gist.id}
+  Recents = kgist_view:to_list(kgist_db:recents()),
+  RelDate = rel_date(Gist#gist.creation_time, Gist#gist.expires),
+  %% TODO Exclude RelDate =:= undefined gists and remove&redirect them
+  ViewCtx = [ {page_title,       "Gist " ++ integer_to_list(Gist#gist.id)}
+            , {gists,            Recents}
+            , {gist_id,          Gist#gist.id}
+            , {gist_description, Gist#gist.description}
+            , {gist_author,      Gist#gist.author}
+            , {gist_filename,    Gist#gist.filename}
+            , {gist_language,    Gist#gist.language}
+            , {gist_hlcode,      Gist#gist.code_highlighted}
+            , {gist_expires,     RelDate}
             ],
   HBody   = kgist_view:render(gist_view, ViewCtx),
   {HBody, ReqData, Ctx}.
@@ -171,7 +182,7 @@ spec(Vals) ->
   Irc      = convert([{min, 2}, fun(["#"|_]) -> true; (_) -> false end], Irc0),
   HlCode   = pygments:pygmentize(Lang, Code),
   %% Load
-  Gist = #gist{ creation_time    = unix_timestamp(now())
+  Gist = #gist{ creation_time    = unix_timestamp()
               , expires          = Expires
               , archived         = false
               , language         = Lang
@@ -204,3 +215,42 @@ convert([{Guard, Def}|Rules], S) when is_function(Guard) ->
     false -> convert(Rules, Def)
   end;
 convert([_|Rules], S) -> convert(Rules, S).
+
+rel_date(Timestamp, "1h")      -> do_rel_date(Timestamp, 60*60);
+rel_date(Timestamp, "1d")      -> do_rel_date(Timestamp, 60*60*24);
+rel_date(Timestamp, "1w")      -> do_rel_date(Timestamp, 60*60*24*7);
+rel_date(Timestamp, "1m")      -> do_rel_date(Timestamp, 60*60*24*30);
+rel_date(Timestamp, "1y")      -> do_rel_date(Timestamp, 60*60*24*365);
+rel_date(Timestamp, undefined) -> do_rel_date(Timestamp, undefined).
+
+do_rel_date(_,         undefined) -> "never";
+do_rel_date(Timestamp, RelAmount) ->
+  Diff = (Timestamp + RelAmount) - unix_timestamp(),
+  io:format("Diff: ~p~n", [Diff]),
+  case Diff of
+    D when D > 60*60*24*7*30 ->
+      Months = D div (60*60*24*7*30),
+      "in " ++ integer_to_list(Months) ++ " month" ++ plural(Months);
+    D when D > 60*60*24*7 ->
+      Weeks = D div (60*60*24*7),
+      "in " ++ integer_to_list(Weeks) ++ " week" ++ plural(Weeks);
+    D when D > 60*60*24 ->
+      Days = D div (60*60*24),
+      "in " ++ integer_to_list(Days) ++ " day" ++ plural(Days);
+    D when D > 60*60 ->
+      Hours = D div (60*60),
+      "in " ++ integer_to_list(Hours) ++ " hour" ++ plural(Hours);
+    D when D > 60 ->
+      Minutes = D div 60,
+      "in " ++ integer_to_list(Minutes) ++ " minute" ++ plural(Minutes);
+    D when D > 0 ->
+      Seconds = D,
+      "in " ++ integer_to_list(Seconds) ++ " second" ++ plural(Seconds);
+    D when D =:= 0 ->
+      "now";
+    D when D < 0 ->
+      undefined
+  end.
+
+plural(N) when N > 0   -> "s";
+plural(N) when N =:= 0 -> "".
