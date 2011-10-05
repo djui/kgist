@@ -8,10 +8,13 @@
         , migrate/0
         , next_id/0
         , put/2
+        , recents/0
         ]).
 
 %%% Imports ====================================================================
--import(tulib_calendar, [ unix_timestamp/1 ]).
+-import(tulib_calendar, [ unix_timestamp/0
+                        , unix_timestamp/1
+                        ]).
 
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
@@ -101,6 +104,13 @@ put(Id, Gist0) ->
     {aborted, Err} -> {error, Err};
     ok             -> ok
   end.
+
+recents() ->
+  Now      = unix_timestamp(),
+  OneWeek  = 604800, %% 7*24*60*60
+  LastWeek = Now - OneWeek,
+  Recents  = get_since(LastWeek),
+  Recents.
 
 %%% Internals ------------------------------------------------------------------
 migrate_schema(DBDir) when is_list(DBDir) ->
