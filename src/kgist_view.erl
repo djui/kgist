@@ -6,6 +6,7 @@
         , reload/0
         , render/2
         , render_partial/2
+        , to_list/1
         ]).
 -export([ init/1
         , handle_call/3
@@ -14,6 +15,8 @@
         , terminate/2
         , code_change/3
         ]).
+%%% Includes ===================================================================
+-include_lib("kgist/include/kgist.hrl").
 
 %%% Records ====================================================================
 -record(state, { view_dir
@@ -23,7 +26,8 @@
 
 %%% Defines ====================================================================
 -define(SERVER, ?MODULE).
--define(is_dict(D), is_record(dict, D)).
+%% Size included as we can't include the record defintion from dict.erl
+-define(is_dict(D), is_record(D, dict, 8)).
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
@@ -35,6 +39,11 @@ render_partial(ViewId, ViewCtx) ->
 
 reload() ->
   gen_server:cast(?SERVER, reload).
+
+to_list(L) ->
+  lists:map(fun(E) ->
+                dict:from_list(record_to_proplist(E))
+            end, L).
 
 %%% Callbacks ------------------------------------------------------------------
 start_link(Config) ->
@@ -51,11 +60,11 @@ init(Config) ->
 
 handle_call({render, ViewId, ViewCtx0}, _From,
             State=#state{views=Views, layout_view=LayoutViewId}) ->
-  ViewCtx    = ensure_dict(ViewCtx0),
   View       = dict:fetch(ViewId, Views),
+  LayoutView = dict:fetch(LayoutViewId, Views),
+  ViewCtx    = ensure_dict(ViewCtx0),
   Body       = do_render(View, ViewCtx),
   LayoutCtx  = dict:store(body, Body, ViewCtx),
-  LayoutView = dict:fetch(LayoutViewId, Views),
   Content    = do_render(LayoutView, LayoutCtx),
   {reply, Content, State};
 handle_call({render_partial, ViewId, ViewCtx0}, _From,
@@ -84,7 +93,8 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 %%% Internals ------------------------------------------------------------------
-do_render(View, ViewCtx) -> mustache:render(undefined, View, ViewCtx).
+do_render(View, ViewCtx) ->
+  mustache:render(undefined, View, ViewCtx).
 
 reload_views(ViewDir) ->
   Load = fun(ViewFilename, Acc) ->
@@ -103,3 +113,8 @@ escape_parenthesis(S) ->
 
 ensure_dict(ViewCtx) when ?is_dict(ViewCtx) -> ViewCtx;
 ensure_dict(ViewCtx)                        -> dict:from_list(ViewCtx).
+
+record_to_proplist(Record) ->
+  Ks = record_info(fields, gist),
+  Vs = tl(tuple_to_list(Record)),
+  lists:zip(Ks, Vs).
