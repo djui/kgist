@@ -26,8 +26,6 @@
 
 %%% Defines ====================================================================
 -define(SERVER, ?MODULE).
-%% Size included as we can't include the record defintion from dict.erl
--define(is_dict(D), is_record(D, dict, 8)).
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------

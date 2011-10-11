@@ -30,7 +30,7 @@
     </div>
   </div>
   <div class="gist_commands">
-    <form method="post" action="{{gist_id}}">
+    <form action="/gist/{{gist_id}}" method="post">
       <input type="hidden" name="_method" value="delete" />
       <input type="submit" value="archive" />
     </form>

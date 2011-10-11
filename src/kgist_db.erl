@@ -12,12 +12,13 @@
         ]).
 
 %%% Imports ====================================================================
--import(tulib_calendar, [ unix_timestamp/0
-                        , unix_timestamp/1
+-import(tulib_calendar, [ unix_ts/0
+                        , unix_ts/1
                         ]).
 
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
+-include_lib("tulib/include/tulib_calendar.hrl").
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
@@ -63,12 +64,20 @@ ensure_tables(Tables) ->
 
 get(Id) ->
   case mnesia:dirty_read(?GIST_TABLE, Id) of
-    []             -> {error, not_found};
     {aborted, Err} -> {error, Err};
-    [R]            -> {ok, R}
+    []             -> {error, notfound};
+    [R] when R#gist.archived -> {error, archived};
+    [R] ->
+      case kgist_gist_resource:expired(R) of
+        true  ->
+          %% TODO Set archive flag to true on expired gists
+          {error, expired};
+        false ->
+          {ok, R}
+      end
   end.
 
-get_since({_,_,_}=D) -> get_since(unix_timestamp(D));
+get_since({_,_,_}=D) -> get_since(unix_ts(D));
 get_since(SinceTS) ->
   MatchHead = #gist{ creation_time='$1'
                    , archived=false
@@ -106,9 +115,8 @@ put(Id, Gist0) ->
   end.
 
 recents() ->
-  Now      = unix_timestamp(),
-  OneWeek  = 604800, %% 7*24*60*60
-  LastWeek = Now - OneWeek,
+  Now      = unix_ts(),
+  LastWeek = Now - ?A_WEEK,
   Recents  = get_since(LastWeek),
   Recents.
 

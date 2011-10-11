@@ -7,10 +7,6 @@
         , to_html/2
         ]).
 
-
-%%% Imports ====================================================================
--import(tulib_calendar, [ unix_timestamp/1 ]).
-
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
@@ -24,19 +20,24 @@ init(_Config) ->
   {ok, #ctx{}}.
   
 %%% Callbacks ------------------------------------------------------------------
+%% @callback webmachine
 allowed_methods(ReqData, Ctx) ->
   {['HEAD', 'GET'], ReqData, Ctx}.
 
+%% @callback webmachine
 content_types_provided(ReqData, Ctx) ->
   {[{"text/html", to_html}], ReqData, Ctx}.
 
+%% @callback content_types_provided
 to_html(ReqData, Ctx) ->
-  Recents = kgist_view:to_list(kgist_db:recents()),
-  ViewCtx = [ {gists, Recents}
-            , {gist, "Foo"} %% TODO Set default values
-            , {page_title, ""}
-            ],
-  HBody   = kgist_view:render(gist_new, ViewCtx),
+  Recents    = kgist_view:to_list(kgist_db:recents()),
+  Author     = wrq:get_cookie_value("author", ReqData),
+  {ok, Lang} = application:get_env(default_language),
+  ViewCtx    = [ {page_title,    ""     }
+               , {gists,         Recents}
+               , {gist_author,   Author }
+               , {gist_language, Lang   }
+               ],
+  HBody      = kgist_view:render(gist_new, ViewCtx),
   {HBody, ReqData, Ctx}.
 
-%%% Internals ------------------------------------------------------------------
