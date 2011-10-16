@@ -1,15 +1,12 @@
 %% -*- mode: erlang;erlang-indent-level: 2;indent-tabs-mode: nil -*-
 {application, kgist,
- [ {description, ""}
+ [ {description, "Code snippet board"}
  , {vsn, "0.1.0"}
  , {modules, []}
  , {registered, []}
  , {applications, [ kernel
                   , stdlib
-                  , inets
-                  , crypto
-                  , mochiweb
-                  , webmachine
+                  , misultin
                   ]}
  , {included_applications, [ mnesia
                            ]}

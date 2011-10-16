@@ -15,33 +15,37 @@ start_link() ->
   supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-  {ok, Host}     = application:get_env(webmachine, host),
-  {ok, Port}     = application:get_env(webmachine, port),
-  {ok, LogDir}   = application:get_env(webmachine, log_dir),
-  {ok, Dispatch} = application:get_env(webmachine, dispatch),
-  WebConfig = [ {ip,       Host}
-              , {port,     Port}
-              , {log_dir,  LogDir}
-              , {dispatch, Dispatch}
-              ],
-  Webmachine = { webmachine_mochiweb
-               , {webmachine_mochiweb, start, [WebConfig]}
-               , permanent, 5000, worker, dynamic
-               },
-  {ok, ViewDir} = application:get_env(view_dir),
-  MustacheConfig = [ {view_dir, ViewDir}
-                   , {layout_view, layout}
+  {ok, Port}     = application:get_env(misultin, port),
+  {ok, LogDir}   = application:get_env(kgist, log_dir),
+  {ok, ViewDir}  = application:get_env(kgist, view_dir),
+  
+  MustacheConfig = [ {view_dir,    ViewDir}
+                   , {layout_view, layout }
                    ],
   MustacheServer = { kgist_view
                    , {kgist_view, start_link, [MustacheConfig]}
-                   , permanent, 5000, worker, [kgist_view]
+                   , permanent, 30000, worker, [kgist_view]
                    },
   PygmentsServer = { pygments
                    , {pygments, start_link, []}
-                   , permanent, 5000, worker, [pygments]
+                   , permanent, 30000, worker, [pygments]
                    },
-  SupTree = {{one_for_one, 10, 10}, [ Webmachine
-                                    , MustacheServer
+  MisultinConfig = [ {port, Port}
+                   , {loop, fun kgist_server:handle_http/1}
+                   ],
+  MisultinServer = { misultin
+                   , {misultin, start_link, [MisultinConfig]}
+                   , permanent, infinity, supervisor, [misultin]
+                   },
+  LoggerConfig   = [ {log_dir,  LogDir} ],
+  LoggerServer   = { kgist_logger
+                   , {kgist_logger, start_link, [LoggerConfig]}
+                   , permanent, 30000, worker, [kgist_logger]
+                   },  
+  
+  SupTree = {{one_for_one, 10, 10}, [ MustacheServer
                                     , PygmentsServer
+                                    , MisultinServer
+                                    ,   LoggerServer
                                     ]},
   {ok, SupTree}.

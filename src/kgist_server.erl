@@ -1,89 +1,60 @@
--module(kgist_gist_resource).
+-module(kgist_server).
 
 %%% Exports ====================================================================
--export([ init/1 ]).
--export([ allowed_methods/2
-        , allow_missing_post/2
-        , content_types_provided/2
-        , content_types_accepted/2
-        , create_path/2
-        , delete_resource/2
-        , delete_completed/2
-        , expired/1
-        , expires/2
-        , from_form/2
-        , generate_etag/2
-        , valid_gist_id/1
-        , last_modified/2
-        , post_is_create/2
-        , previously_existed/2
-        , process_post/2
-        , resource_exists/2
-        , service_available/2
-        , to_html/2
-        , to_text/2
-        ]).
+-export([ handle_http/1 ]).
 
 %%% Imports ====================================================================
 -import(tulib_calendar, [ unix_ts/0
                         , unix_ts/1
                         , unix_ts_to_datetime/1
                         ]).
--import(tulib_string,   [ fmt/2 ]).
 -import(tulib_erlang,   [ len/1 ]).
+-import(tulib_string,   [ fmt/2 ]).
 
 %%% Includes ===================================================================
 -include_lib("kgist/include/kgist.hrl").
 -include_lib("tulib/include/tulib_calendar.hrl").
--include_lib("webmachine/include/webmachine.hrl").
 
-%%% Records ====================================================================
--record(ctx, { action
-             , rsrc
-             , id
-             }).
+%%% Defines ====================================================================
+-define(HTML,  [{'Content-Type', "text/html" }]).
+-define(PLAIN, [{'Content-Type', "text/plain"}]).
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
-init(Config) ->
-  Action = proplists:get_value(action, Config),
-  {ok, #ctx{action=Action}}.
-  
-%%% Callbacks ------------------------------------------------------------------
-%% @callback webmachine
-allowed_methods(ReqData, Ctx) ->
-  {['HEAD', 'GET', 'POST', 'PUT', 'DELETE'], ReqData, Ctx}.
+handle_http(Req) ->
+  Method = Req:get(method),
+  Res    = Req:resource([lowercase, urldecode]),
+  handle(Method, Res, Req).
 
-%% @callback webmachine
-allow_missing_post(ReqData, Ctx) -> {true, ReqData, Ctx}.
+%%% Dispatches ------------------------------------------------------------------
+handle('GET', [], Req) -> %% Redirect
+  handle('GET', ["gist"], Req);
+handle('GET', ["gist"], Req) -> %% New gist
+  Recents    = kgist_view:to_list(kgist_db:recents()),
+  Author     = get_cookie_value("author", "", Req),
+  {ok, Lang} = application:get_env(default_language),
+  ViewCtx    = [ {page_title,    ""     }
+               , {gists,         Recents}
+               , {gist_author,   Author }
+               , {gist_language, Lang   }
+               ],
+  HBody      = kgist_view:render(gist_new, ViewCtx),
+  Req:ok(?HTML, HBody);
+handle('GET', ["gist", GistId], Req) ->
+  Req:ok(?HTML, "Gist Id ~s", [GistId]);
+handle('GET', ["gist", GistId, "raw"], Req) ->
+  Req:ok(?PLAIN, "raw ~s", [GistId]);
+handle('GET', ["gist", GistId, "download"], Req) ->
+  Header = add_header_download(GistId, []),
+  Req:ok(Header, "download ~s", [GistId]);
+handle('GET', Path, Req) -> %% Serve static files
+  Req:file(attachment, file_path(root_dir(), Path));
+handle(_, _, Req) -> %% Nothing matched
+  '404'(Req).
 
-%% @callback webmachine
-content_types_provided(ReqData, Ctx) ->
-  {[ {"text/plain", to_text}
-   , {"text/html",  to_html}
-   ], ReqData, Ctx}.
-
-%% @callback webmachine
-content_types_accepted(ReqData, Ctx) ->
-  {[ {"application/x-www-form-urlencoded", from_form}
-   ], ReqData, Ctx}.
-
-%% @callback webmachine
-create_path(ReqData, Ctx) ->
-  Id = kgist_db:next_id(),
-  {integer_to_list(Id), ReqData, Ctx#ctx{id=Id}}.
-
-%% TODO Update
-  
-%% @callback webmachine
-delete_resource(ReqData, Ctx) ->
-  %% TODO Delete
-  {true, ReqData, Ctx}.
-
-%% @callback webmachine
-delete_completed(ReqData, Ctx) ->
-  %% TODO Delete
-  {true, ReqData, Ctx}.
+%% Args = Req:parse_qs(),
+%% Req:get_variable("value", Args),
+%% Req:parse_post(),
 
 expired(Gist) -> unix_ts() >= expires(Gist). %% true = N >= undefined
 
@@ -111,12 +82,6 @@ from_form(ReqData, Ctx) ->
       ReqData3 = wrq:do_redirect(true, ReqData2),
       {true, ReqData3, Ctx}
   end.
-
-%% @callback webmachine
-generate_etag(ReqData, Ctx) -> {undefined, ReqData, Ctx}.
-
-%% @callback webmachine
-last_modified(ReqData, Ctx) -> {undefined, ReqData, Ctx}.
 
 %% @callback webmachine
 post_is_create(ReqData, Ctx) ->
@@ -155,10 +120,6 @@ resource_exists(ReqData, Ctx) ->
       end
   end.
 
-%% @callback webmachine
-service_available(ReqData, Ctx) ->
-  {yes =:= mnesia:system_info(is_running), ReqData, Ctx}.
-
 %% @callback content_types_provided
 to_text(ReqData0, Ctx=#ctx{action=download, rsrc=Gist}) ->
   ReqData = attachment(Gist#gist.filename, ReqData0),
@@ -191,6 +152,32 @@ to_html(ReqData, Ctx=#ctx{rsrc=Gist})   ->
 valid_gist_id(ReqData) -> gist_id(ReqData) =/= error.
 
 %%% Internals ------------------------------------------------------------------
+add_header(K, V, H) ->
+  [{K,V}|H].
+
+add_header_download(File, H) ->
+  add_header('Content-Disposition', fmt("attachment; filename=~s", [File]), H).
+
+get_cookie_value(Key, Def, Req) ->
+  Cookies = Req:get_cookies(),
+  Cookie  = Req:get_cookie_value(Key, Cookies),
+  case Cookie of
+    undefined -> Def;
+    C         -> C
+  end.
+
+file_path(AbsRoot, RelPath0) ->
+  RelPath = lists:filter(fun("..") -> false; (_) -> true end, RelPath0),
+  filename:join([AbsRoot|RelPath]).
+
+root_dir() ->
+  {ok, RootDir} = application:get_env(kgist, root_dir),
+  filename:absname(RootDir).
+
+'404'(Req) ->
+ Header = [{'Content-Type', "text/html"}],
+ Req:respond(404, Header, "File not Found.").
+
 gist_id(ReqData) ->
   Id = wrq:path_info(id, ReqData),
   case string:to_integer(Id) of
