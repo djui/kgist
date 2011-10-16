@@ -29,6 +29,7 @@ handle_http(Req) ->
 %%% Dispatches ------------------------------------------------------------------
 handle('GET', [], Req) -> %% Redirect
   handle('GET', ["gist"], Req);
+
 handle('GET', ["gist"], Req) -> %% New gist
   Recents    = kgist_view:to_list(kgist_db:recents()),
   Author     = get_cookie_value("author", "", Req),
@@ -38,101 +39,19 @@ handle('GET', ["gist"], Req) -> %% New gist
                , {gist_author,   Author }
                , {gist_language, Lang   }
                ],
-  HBody      = kgist_view:render(gist_new, ViewCtx),
-  Req:ok(?HTML, HBody);
-handle('GET', ["gist", GistId], Req) ->
-  Req:ok(?HTML, "Gist Id ~s", [GistId]);
-handle('GET', ["gist", GistId, "raw"], Req) ->
-  Req:ok(?PLAIN, "raw ~s", [GistId]);
-handle('GET', ["gist", GistId, "download"], Req) ->
-  Header = add_header_download(GistId, []),
-  Req:ok(Header, "download ~s", [GistId]);
-handle('GET', Path, Req) -> %% Serve static files
-  Req:file(attachment, file_path(root_dir(), Path));
-handle(_, _, Req) -> %% Nothing matched
-  '404'(Req).
+  Body       = kgist_view:render(gist_new, ViewCtx),
+  Req:ok(?HTML, Body);
 
-%% Args = Req:parse_qs(),
-%% Req:get_variable("value", Args),
-%% Req:parse_post(),
-
-expired(Gist) -> unix_ts() >= expires(Gist). %% true = N >= undefined
-
-%% @callback webmachine
-expires(ReqData, Ctx=#ctx{rsrc=Gist}) -> {expires(Gist), ReqData, Ctx}.
-
-expires(#gist{creation_time=CTime, expires="1h"}) -> unix_ts_to_datetime(CTime + ?A_HOUR );
-expires(#gist{creation_time=CTime, expires="1d"}) -> unix_ts_to_datetime(CTime + ?A_DAY  );
-expires(#gist{creation_time=CTime, expires="1w"}) -> unix_ts_to_datetime(CTime + ?A_WEEK );
-expires(#gist{creation_time=CTime, expires="1m"}) -> unix_ts_to_datetime(CTime + ?A_MONTH);
-expires(#gist{creation_time=CTime, expires="1y"}) -> unix_ts_to_datetime(CTime + ?A_YEAR );
-expires(#gist{expires=undefined})                 -> undefined.
-%%expires(undefined)                                -> undefined.
-
-%% @callback content_types_accepted
-from_form(ReqData, Ctx) ->
-  Id      = Ctx#ctx.id,
-  ReqBody = wrq:req_body(ReqData),
-  Vals    = mochiweb_util:parse_qs(ReqBody),
+handle('POST', ["gist"], Req) ->
+  Id         = kgist_db:next_id(),
+  %% TODO Just do a redirect to 'PUT gist/Id'?
+  Vals       = Req:parse_post(),
   {ok, Gist} = spec(Vals),
-  ReqData2 = set_cookie("author", Gist#gist.author, ReqData),
-  case kgist_db:put(Id, Gist) of
-    {error, Err} -> {Err, ReqData2, Ctx};
-    ok ->
-      ReqData3 = wrq:do_redirect(true, ReqData2),
-      {true, ReqData3, Ctx}
-  end.
+  Req2       = Req:set_cookie("author", Gist#gist.author),
+  ok         = kgist_db:put(Id, Gist),
+  redirect(["gist", Id], Req);
 
-%% @callback webmachine
-post_is_create(ReqData, Ctx) ->
-  ReqBody = wrq:req_body(ReqData),
-  Vals    = mochiweb_util:parse_qs(ReqBody),
-  %% TODO Not strictly, combine with: resource_exists
-  {true, ReqData, Ctx}.
-
-%% @callback webmachine
-previously_existed(ReqData, Ctx=#ctx{rsrc=notfound}) -> {false, ReqData, Ctx};
-previously_existed(ReqData, Ctx=#ctx{rsrc=archived}) -> {true,  ReqData, Ctx};
-previously_existed(ReqData, Ctx=#ctx{rsrc=expired }) -> {true,  ReqData, Ctx};
-previously_existed(ReqData, Ctx)                     -> {true,  ReqData, Ctx}.
-
-process_post(ReqData0, Ctx) ->
-  %% TODO Convert hidden _method delete to DELETE
-  ReqBody = wrq:req_body(ReqData),
-  Vals    = mochiweb_util:parse_qs(ReqBody),
-
-  ReqData = case wrq:get_qs_value("_method", ReqData0) of
-              undefined -> wrq:method(ReqData0);
-              M         -> wrq:set_method(string:to_upper(M), ReqData0)
-            end,
-  {true, ReqData, Ctx}.
-
-%% @callback webmachine
-resource_exists(ReqData, Ctx) ->
-  case gist_id(ReqData) of
-    error        -> {false, ReqData, Ctx};
-    {ok, GistId} ->
-      case kgist_db:get(GistId) of
-        {ok,    Gist    } -> {true,  ReqData, Ctx#ctx{rsrc=Gist}};
-        {error, notfound} -> {false, ReqData, Ctx#ctx{rsrc=notfound}};
-        {error, archived} -> {false, ReqData, Ctx#ctx{rsrc=archived}};
-        {error, expired } -> {false, ReqData, Ctx#ctx{rsrc=expired}}
-      end
-  end.
-
-%% @callback content_types_provided
-to_text(ReqData0, Ctx=#ctx{action=download, rsrc=Gist}) ->
-  ReqData = attachment(Gist#gist.filename, ReqData0),
-  Text    = Gist#gist.code,
-  {Text, ReqData, Ctx};
-to_text(ReqData, Ctx=#ctx{rsrc=Gist}) ->
-  Text = Gist#gist.code,
-  {Text, ReqData, Ctx}.
-
-%% @callback content_types_provided
-to_html(ReqData, Ctx=#ctx{action=raw})      -> to_text(ReqData, Ctx);
-to_html(ReqData, Ctx=#ctx{action=download}) -> to_text(ReqData, Ctx);
-to_html(ReqData, Ctx=#ctx{rsrc=Gist})   ->
+handle('GET', ["gist", GistId0], Req) ->
   Recents = kgist_view:to_list(kgist_db:recents()),
   RelDate = rel_date(Gist#gist.creation_time, Gist#gist.expires),
   ViewCtx = [ {page_title,       fmt("Gist ~b", [Gist#gist.id])}
@@ -145,11 +64,25 @@ to_html(ReqData, Ctx=#ctx{rsrc=Gist})   ->
             , {gist_id,          Gist#gist.id              }
             , {gist_language,    Gist#gist.language        }
             ],
-  HBody   = kgist_view:render(gist_view, ViewCtx),
-  {HBody, ReqData, Ctx}.
+  Body    = kgist_view:render(gist_view, ViewCtx),
+  Req:ok(?HTML, Body);
 
-%% @doc Dispatch callback guard
-valid_gist_id(ReqData) -> gist_id(ReqData) =/= error.
+handle('GET', ["gist", GistId0, "raw"], Req) ->
+  {ok, GistId} = kgist:convert_id(GistId0),
+  {ok, Gist}   = kgist_db:get(GistId),
+  Req:ok(?PLAIN, Gist#gist.code);
+
+handle('GET', ["gist", GistId0, "download"], Req) ->
+  {ok, GistId} = kgist:convert_id(GistId0),
+  {ok, Gist}   = kgist_db:get(GistId),
+  Header       = add_header_download(Gist#gist.filename, ?PLAIN),
+  Req:ok(Header, Gist#gist.code);
+
+handle('GET', Path, Req) -> %% Serve static files
+  Req:file(attachment, file_path(root_dir(), Path));
+
+handle(_, _, Req) -> %% Nothing matched
+  '404'(Req).
 
 %%% Internals ------------------------------------------------------------------
 add_header(K, V, H) ->
@@ -173,26 +106,6 @@ file_path(AbsRoot, RelPath0) ->
 root_dir() ->
   {ok, RootDir} = application:get_env(kgist, root_dir),
   filename:absname(RootDir).
-
-'404'(Req) ->
- Header = [{'Content-Type', "text/html"}],
- Req:respond(404, Header, "File not Found.").
-
-gist_id(ReqData) ->
-  Id = wrq:path_info(id, ReqData),
-  case string:to_integer(Id) of
-    {error,   _} -> error;
-    {GistId, []} ->
-      case GistId >= 1000 andalso GistId =< 9999 of
-        true  -> {ok, GistId};
-        false -> error
-      end
-  end.
-
-attachment(Filename, ReqData) ->
-  wrq:set_resp_header("content-disposition",
-                      fmt("attachment; filename=~s", [Filename]),
-                      ReqData).
 
 spec(Vals) ->
   %% ETL Style
@@ -269,7 +182,13 @@ do_rel_date(Timestamp, RelAmount) ->
 s(1)                    -> "";
 s(N) when is_integer(N) -> "s".
 
-set_cookie(Key, Value, ReqData) ->
-  OneYear = 60*60*24*365,
-  {K, V} = mochiweb_cookies:cookie(Key, Value, [{max_age, OneYear}]),
-  wrq:set_resp_header(K, V, ReqData).
+redirect(Path, Req) -> '303'(Path, Req).
+
+'303'(Path, Req) ->
+  %% TODO Construct path and set correct header
+  Header = [{'Path'}, filename:join(Path)],
+  Req:respond(303, Header, "").
+  
+'404'(Req) ->
+  Header = [{'Content-Type', "text/html"}],
+  Req:respond(404, Header, "File not Found.").

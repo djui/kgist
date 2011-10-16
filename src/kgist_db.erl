@@ -94,8 +94,7 @@ migrate() ->
   %% ...
   ok.
 
-next_id() ->
-  %% HACK!
+next_id() -> %% HACK!
   UpdateCounter =
     fun() ->
         [GistCounter] = mnesia:read(?GIST_TABLE, ?GIST_KEY_COUNTER),
