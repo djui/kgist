@@ -53,11 +53,13 @@ handle('POST', ["gist"], Req) ->
   %% TODO Just do a redirect to 'PUT gist/Id'?
   Vals       = Req:parse_post(),
   {ok, Gist} = spec(Vals),
-  Req2       = Req:set_cookie("author", Gist#gist.author),
   ok         = kgist_db:put(Id, Gist),
+  Req:set_cookie("author", Gist#gist.author),
   redirect(["gist", Id], Req);
 
 handle('GET', ["gist", GistId0], Req) ->
+  {ok, GistId} = kgist:convert_id(GistId0),
+  {ok, Gist}   = kgist_db:get(GistId),
   Recents = kgist_view:to_list(kgist_db:recents()),
   RelDate = rel_date(Gist#gist.creation_time, Gist#gist.expires),
   ViewCtx = [ {page_title,       fmt("Gist ~b", [Gist#gist.id])}

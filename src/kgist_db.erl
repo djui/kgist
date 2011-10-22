@@ -1,8 +1,12 @@
 -module(kgist_db).
 
+%%% Compiles ===================================================================
+-compile({no_auto_import, [get/1]}).
+
 %%% Exports ====================================================================
 -export([ backup/1
         , ensure_initialized/0
+        , exists/1
         , get/1
         , get_since/1
         , migrate/0
@@ -61,6 +65,14 @@ ensure_tables(Tables) ->
                end
            end,
   lists:foreach(Create, Tables).
+
+exists(Id) ->
+  case get(Id) of
+    {ok,    Gist    } -> {true,  Gist    };
+    {error, notfound} -> {false, notfound};
+    {error, archived} -> {false, archived};
+    {error, expired } -> {false, expired }
+  end.
 
 get(Id) ->
   case mnesia:dirty_read(?GIST_TABLE, Id) of
