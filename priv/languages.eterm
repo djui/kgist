@@ -1,0 +1,133 @@
+%% -*- mode: erlang;erlang-indent-level: 2;indent-tabs-mode: nil -*-
+{"Bash",             [ {alias, [bash,sh,ksh]}
+                     , {ext,   [".sh",".ksh",".bash",".ebuild", ".eclass"]}
+                     , {mime,  ["application/x-sh","application/x-shellscript"]}
+                     ]}.
+{"Clojure",          [ {alias, [clojure,clj]}
+                     , {ext,   [".clj"]}
+                     , {mime,  ["text/x-clojure","application/x-clojure"]}
+                     ]}.
+{"CoffeeScript",     [ {alias, ['coffee-script',coffeescript]}
+                     , {ext,   [".coffee"]}
+                     , {mime,  ["text/coffeescript"]}
+                     ]}.
+{"Common Lisp",      [ {alias, ['common-lisp',cl]}
+                     , {ext,   [".cl",".lisp",".el"]}
+                     , {mime,  ["text/x-common-lisp"]}
+                     ]}.
+{"CSS",              [ {alias, [css]}
+                     , {ext,   [".css"]}
+                     , {mime,  ["text/css"]}
+                     ]}.
+{"Diff",             [ {alias, [diff,udiff]}
+                     , {ext,   [".diff",".patch"]}
+                     , {mime,  ["text/x-diff","text/x-patch"]}
+                     ]}.
+{"Erlang",           [ {alias, [erlang]}
+                     , {ext,   [".erl",".hrl"]}
+                     , {mime,  ["text/x-erlang"]}
+                     ]}.
+{"Gettext Catalog",  [ {alias, [pot,po]}
+                     , {ext,   [".pot",".po"]}
+                     , {mime,  ["application/x-gettext","text/x-gettext", "text/gettext"]}
+                     ]}.
+{"Gnuplot",          [ {alias, [gnuplot]}
+                     , {ext,   [".plot",".plt"]}
+                     , {mime,  ["text/x-gnuplot"]}
+                     ]}.
+{"Go",               [ {alias, [go]}
+                     , {ext,   [".go"]}
+                     , {mime,  ["text/x-gosrc"]}
+                     ]}.
+{"Haskell",          [ {alias, [haskell,hs]}
+                     , {ext,   [".hs"]}
+                     , {mime,  ["text/x-haskell"]}
+                     ]}.
+{"HTML",             [ {alias, [html]}
+                     , {ext,   [".html",".htm",".xhtml",".xslt"]}
+                     , {mime,  ["text/html","application/xhtml+xml"]}
+                     ]}.
+{"INI",              [ {alias, [ini,cfg]}
+                     , {ext,   [".ini",".cfg"]}
+                     , {mime,  ["text/x-ini"]}
+                     ]}.
+{"IRC logs",         [ {alias, [irc]}
+                     , {ext,   [".weechatlog"]}
+                     , {mime,  ["text/x-irclog"]}
+                     ]}.
+{"Java",             [ {alias, [java]}
+                     , {ext,   [".java"]}
+                     , {mime,  ["text/x-java"]}
+                     ]}.
+{"JavaScript",       [ {alias, [js,javascript]}
+                     , {ext,   [".js"]}
+                     , {mime,  ["application/javascript","application/x-javascript", "text/x-javascript","text/javascript"]}
+                     ]}.
+{"Makefile",         [ {alias, [make,makefile,mf,bsdmake]}
+                     , {ext,   [".mak","Makefile","makefile","Makefile.*", "GNUmakefile"]}
+                     , {mime,  ["text/x-makefile"]}
+                     ]}.
+{"MySQL",            [ {alias, [mysql]}
+                     , {ext,   []}
+                     , {mime,  ["text/x-mysql"]}
+                     ]}.
+{"Perl",             [ {alias, [perl,pl]}
+                     , {ext,   [".pl",".pm"]}
+                     , {mime,  ["text/x-perl","application/x-perl"]}
+                     ]}.
+{"PHP",              [ {alias, ["php","php3","php4","php5"]}
+                     , {ext,   [".php",".php[345]"]}
+                     , {mime,  ["text/x-php"]}
+                     ]}.
+{"Python",           [ {alias, [python,py]}
+                     , {ext,   [".py",".pyw",".sc","SConstruct", "SConscript",".tac"]}
+                     , {mime,  ["text/x-python","application/x-python"]}
+                     ]}.
+{"Python 3",         [ {alias, [python3,py3]}
+                     , {ext,   []}
+                     , {mime,  ["text/x-python3","application/x-python3"]}
+                     ]}.
+{"reStructuredText", [ {alias, [rst,rest,restructuredtext]}
+                     , {ext,   [".rst",".rest"]}
+                     , {mime,  ["text/x-rst","text/prs.fallenstein.rst"]}
+                     ]}.
+{"Ruby",             [ {alias, [rb,ruby,duby]}
+                     , {ext,   [".rb",".rbw","Rakefile",".rake", ".gemspec",".rbx",".duby"]}
+                     , {mime,  ["text/x-ruby","application/x-ruby"]}
+                     ]}.
+{"R",                [ {alias, [splus,s,r]}
+                     , {ext,   [".R",".S"]}
+                     , {mime,  ["text/R","text/S","text/S-plus"]}
+                     ]}.
+{"Scala",            [ {alias, [scala]}
+                     , {ext,   [".scala"]}
+                     , {mime,  ["text/x-scala"]}
+                     ]}.
+{"SQL",              [ {alias, [sql]}
+                     , {ext,   [".sql"]}
+                     , {mime,  ["text/x-sql"]}
+                     ]}.
+{"TeX",              [ {alias, [tex,latex]}
+                     , {ext,   [".tex",".aux",".toc"]}
+                     , {mime,  ["text/x-tex","text/x-latex"]}
+                     ]}.
+{"Text only",        [ {alias, [text]}
+                     , {ext,   [".txt"]}
+                     , {mime,  ["text/plain"]}
+                     ]}.
+{"VimL",             [ {alias, [vim]}
+                     , {ext,   [".vim",".vimrc"]}
+                     , {mime,  ["text/x-vim"]}
+                     ]}.
+{"XML",              [ {alias, [xml]}
+                     , {ext,   [".xml",".xsl",".rss",".xslt",".xsd", ".wsdl"]}
+                     , {mime,  ["text/xml","application/xml","image/svg+xml", "application/rss+xml","application/atom+xml", "application/xsl+xml","application/xslt+xml"]}
+                     ]}.
+{"XQuery",           [ {alias, [xquery,xqy]}
+                     , {ext,   [".xqy",".xquery"]}
+                     , {mime,  ["text/xquery","application/xquery"]}
+                     ]}.
+{"XSLT",             [ {alias, [xslt]}
+                     , {ext,   [".xsl",".xslt"]}
+                     , {mime,  ["text/xml","application/xml","image/svg+xml", "application/rss+xml","application/atom+xml", "application/xsl+xml","application/xslt+xml"]}
+                     ]}.
