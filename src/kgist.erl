@@ -11,7 +11,9 @@
         ]).
 
 %%% Imports ====================================================================
--import(tulib_application, [ ensure_started/1 ]).
+-import(tulib_application, [ ensure_started/1
+                           , priv_file/2
+                           ]).
 -import(tulib_calendar, [ unix_ts/0
                         , unix_ts/1
                         , unix_ts_to_datetime/1
@@ -24,6 +26,8 @@
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
 start() ->
+  LogDir = priv_file(kgist, filename:join(["logs", "server.log"])),
+  ok = error_logger:logfile({open, LogDir}),
   ensure_started(mnesia),
   kgist_db:ensure_initialized(),
   ensure_started(misultin),
@@ -33,6 +37,7 @@ stop() ->
   Res = application:stop(kgist),
   application:stop(misultin),
   application:stop(mnesia),
+  error_logger:logfile(close),
   Res.
 
 convert_id(Id) ->

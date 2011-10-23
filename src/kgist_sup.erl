@@ -16,7 +16,7 @@ start_link() ->
 
 init([]) ->
   {ok, Port}     = application:get_env(misultin, port),
-  {ok, _LogDir}  = application:get_env(kgist, log_dir),
+  {ok, LogDir}   = application:get_env(kgist, log_dir),
   {ok, ViewDir}  = application:get_env(kgist, view_dir),
   
   MustacheConfig = [ {view_dir,    ViewDir}
@@ -30,9 +30,14 @@ init([]) ->
                    , {pygments, start_link, []}
                    , permanent, 30000, worker, [pygments]
                    },
+  LoggerConfig   = [ {log_dir,  LogDir} ],
+  LoggerServer   = { kgist_logger
+                   , {kgist_logger, start_link, [LoggerConfig]}
+                   , permanent, 30000, worker, [kgist_logger]
+                   },
   MisultinConfig = [ {port, Port}
                    , {loop,       fun kgist_server:handle_http/1}
-                   , {access_log, fun kgist_server:access_log/1}
+                   , {access_log, fun kgist_logger:access_log/1}
                    ],
   MisultinServer = { misultin
                    , {misultin, start_link, [MisultinConfig]}
@@ -41,6 +46,7 @@ init([]) ->
   
   SupTree = {{one_for_one, 10, 10}, [ MustacheServer
                                     , PygmentsServer
+                                    ,   LoggerServer
                                     , MisultinServer
                                     ]},
   {ok, SupTree}.

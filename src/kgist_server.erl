@@ -2,7 +2,6 @@
 
 %%% Exports ====================================================================
 -export([ handle_http/1
-        , access_log/1
         ]).
 
 %%% Imports ====================================================================
@@ -27,10 +26,6 @@ handle_http(Req) ->
   Method = Req:get(method),
   Res    = Req:resource([lowercase, urldecode]),
   handle(Method, Res, Req).
-
-access_log({PeerAddr, DateTime, RequestLine, HttpCode, ContentLength}) ->
-  io:format("~s - - [~s] \"~s\" ~p ~p~n",
-            [PeerAddr, DateTime, RequestLine, HttpCode, ContentLength]).
 
 %%% Dispatches -----------------------------------------------------------------
 handle('GET', [], Req) -> %% Redirect
