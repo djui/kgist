@@ -42,18 +42,25 @@ label { margin-right: 5px; color: #909090; }
 #gist_snippet_language { }
 #gist_snippet_exports { float: right; }
 #gist_snippet_code { margin: 15px 0 10px 0; padding: 0; min-height: 0px; overflow-x: auto; border: 1px #CCCCCC solid; background-color: #FFFFFF; line-height: 1.1; }
-#gist_snippet_code::-webkit-scrollbar { height: 6px; border-radius: 5px; }
-#gist_snippet_code::-webkit-scrollbar-thumb { background: #DDDDDD; border-radius: 5px; }
+#gist_snippet_code::-webkit-scrollbar { height: 7px; border-radius: 6px; }
+#gist_snippet_code::-webkit-scrollbar-thumb { background: #999999; border-radius: 6px; }
 #gist_expires { }
 .gist_commands { float: right; }
 
-.highlight > pre { padding: 0; margin: 0; font-family: ProggyCleanSZBP; font-smooth: never; font-size: 16px; }
+.highlight > pre { padding: 0; margin: 3px 0 3px 0; }
 
 .form_button { display: inline; }
 
+#all_gists { margin: 30px 10px 0 0 }
+#all_list { }
+#all_list th { padding: 1px 5px; text-align: left }
+#all_list td { padding: 1px 5px }
 #recent_gists { float: right; margin: 0 30px 0 0; width: 250px; }
 #recent_list { list-style-type: none; padding: 0px; }
 .description { color: #999999; }
 
 .flash_error { min-width: 100px; width: 200px; margin: 20px auto; padding: 10px; text-align: center; color: #CC0000; font-weight: bold; background-color: #FFEEEE; border: 1px #FF0000 solid; border-radius: 3px; }
 .flash_info {  }
+
+footer { margin-top: 50px; font-size: 0.8em; color: #999999; }
+footer a { color: #999999 }
