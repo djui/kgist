@@ -15,8 +15,6 @@
         , terminate/2
         , code_change/3
         ]).
-%%% Includes ===================================================================
--include_lib("kgist/include/kgist.hrl").
 
 %%% Records ====================================================================
 -record(state, { view_dir
@@ -26,6 +24,8 @@
 
 %%% Defines ====================================================================
 -define(SERVER, ?MODULE).
+-define(is_dict(D), is_record(D, dict, 8)). %% Size included as we can't include
+                                            %% the record def from dict.erl
 
 %%% Code =======================================================================
 %%% API ------------------------------------------------------------------------
@@ -38,10 +38,7 @@ render_partial(ViewId, ViewCtx) ->
 reload() ->
   gen_server:cast(?SERVER, reload).
 
-to_list(L) ->
-  lists:map(fun(E) ->
-                dict:from_list(record_to_proplist(E))
-            end, L).
+to_list(L) -> lists:map(fun kgist_gist:to_dict/1, L).
 
 %%% Callbacks ------------------------------------------------------------------
 start_link(Config) ->
@@ -58,12 +55,14 @@ init(Config) ->
 
 handle_call({render, ViewId, ViewCtx0}, _From,
             State=#state{views=Views, layout_view=LayoutViewId}) ->
-  View       = dict:fetch(ViewId, Views),
-  LayoutView = dict:fetch(LayoutViewId, Views),
-  ViewCtx    = ensure_dict(ViewCtx0),
-  Body       = do_render(View, ViewCtx),
-  LayoutCtx  = dict:store(body, Body, ViewCtx),
-  Content    = do_render(LayoutView, LayoutCtx),
+  View        = dict:fetch(ViewId, Views),
+  LayoutView  = dict:fetch(LayoutViewId, Views),
+  ViewCtx     = ensure_dict(ViewCtx0),
+  Body        = do_render(View, ViewCtx),
+  {ok, Email} = application:get_env(kgist, admin_email),
+  LayoutCtx1  = dict:store(admin_email, Email, ViewCtx),
+  LayoutCtx2  = dict:store(body, Body, LayoutCtx1),
+  Content     = do_render(LayoutView, LayoutCtx2),
   {reply, Content, State};
 handle_call({render_partial, ViewId, ViewCtx0}, _From,
             State=#state{views=Views}) ->
@@ -111,8 +110,3 @@ escape_parenthesis(S) ->
 
 ensure_dict(ViewCtx) when ?is_dict(ViewCtx) -> ViewCtx;
 ensure_dict(ViewCtx)                        -> dict:from_list(ViewCtx).
-
-record_to_proplist(Record) ->
-  Ks = record_info(fields, gist),
-  Vs = tl(tuple_to_list(Record)),
-  lists:zip(Ks, Vs).

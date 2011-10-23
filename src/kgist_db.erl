@@ -1,18 +1,22 @@
 -module(kgist_db).
 
 %%% Compiles ===================================================================
--compile({no_auto_import, [get/1]}).
+-compile({no_auto_import, [ get/1
+                          , put/2
+                          ]}).
 
 %%% Exports ====================================================================
--export([ backup/1
+-export([ archive/1
+        , backup/1
         , ensure_initialized/0
         , exists/1
         , get/1
+        , get_rel_since/1
         , get_since/1
         , migrate/0
         , next_id/0
         , put/2
-        , recents/0
+        , recents/1
         ]).
 
 %%% Imports ====================================================================
@@ -68,26 +72,28 @@ ensure_tables(Tables) ->
 
 exists(Id) ->
   case get(Id) of
-    {ok,    Gist    } -> {true,  Gist    };
-    {error, notfound} -> {false, notfound};
-    {error, archived} -> {false, archived};
-    {error, expired } -> {false, expired }
+    {ok,       Gist    } -> {true,  Gist    };
+    {archived, _Gist   } -> {false, archived};
+    {expired,  _Gist   } -> {false, expired };
+    {error,    notfound} -> {false, notfound}
   end.
 
 get(Id) ->
   case mnesia:dirty_read(?GIST_TABLE, Id) of
     {aborted, Err} -> {error, Err};
     []             -> {error, notfound};
-    [R] when R#gist.archived -> {error, archived};
-    [R] ->
-      case kgist_gist_resource:expired(R) of
-        true  ->
-          %% TODO Set archive flag to true on expired gists
-          {error, expired};
-        false ->
-          {ok, R}
+    [Gist] when Gist#gist.archived -> {archived, Gist};
+    [Gist] ->
+      case kgist_gist:expired(Gist) of
+        true  -> {expired, Gist};
+        false -> {ok,      Gist}
       end
   end.
+
+get_rel_since(RelTime) ->
+  Now      = unix_ts(),
+  AbsTime = Now - RelTime,
+  get_since(AbsTime).
 
 get_since({_,_,_}=D) -> get_since(unix_ts(D));
 get_since(SinceTS) ->
@@ -95,9 +101,10 @@ get_since(SinceTS) ->
                    , archived=false
                    , _= '_'
                    },
-  Guard     = {'>=', '$1', SinceTS},
-  Result    = '$_',
-  mnesia:dirty_select(?GIST_TABLE, [{MatchHead, [Guard], [Result]}]).
+  Guards    = [{'>=', '$1', SinceTS}],
+  Result    = ['$_'],
+  Res = mnesia:dirty_select(?GIST_TABLE, [{MatchHead, Guards, Result}]),
+  Res.
 
 migrate() ->
   {ok, DBDir} = application:get_env(mnesia, dir),
@@ -106,18 +113,19 @@ migrate() ->
   %% ...
   ok.
 
-next_id() -> %% HACK!
-  UpdateCounter =
-    fun() ->
-        [GistCounter] = mnesia:read(?GIST_TABLE, ?GIST_KEY_COUNTER),
-        NewVal = GistCounter#gist.creation_time+1,
-        NewGistCounter = GistCounter#gist{creation_time=NewVal},
-        mnesia:write(?GIST_TABLE, NewGistCounter, write),
-        NewVal
-    end,
-  {atomic, NewVal} = mnesia:transaction(UpdateCounter),
-  NewVal.
-    
+next_id() -> %% HACK! Random non-collision recursion
+  NextId = kgist_gist:random_id(),
+  case mnesia:dirty_read(?GIST_TABLE, NextId) of
+    []  -> NextId;
+    [_] -> next_id()
+  end.
+
+archive(Gist) when is_record(Gist, gist) ->
+  put(Gist#gist.id, Gist#gist{archived=true});
+archive(Id) ->
+  {ok, Gist} = get(Id),
+  archive(Gist).
+
 put(Id, Gist0) ->
   Gist = Gist0#gist{id=Id},
   case mnesia:dirty_write(?GIST_TABLE, Gist) of
@@ -125,11 +133,15 @@ put(Id, Gist0) ->
     ok             -> ok
   end.
 
-recents() ->
-  Now      = unix_ts(),
-  LastWeek = Now - ?A_WEEK,
-  Recents  = get_since(LastWeek),
-  Recents.
+recents(N) ->
+  MatchHead = #gist{ creation_time='$1'
+                   , archived=false
+                   , _= '_'
+                   },
+  Guards    = [],
+  Result    = ['$_'],
+  Res = mnesia:dirty_select(?GIST_TABLE, [{MatchHead, Guards, Result}]),
+  lists:reverse(lists:sublist(Res, N)).
 
 %%% Internals ------------------------------------------------------------------
 migrate_schema(DBDir) when is_list(DBDir) ->
