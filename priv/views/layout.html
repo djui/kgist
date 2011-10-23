@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <title>kGist {{page_title}}</title>
-  <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="/css/syntax_github.css" />
-  <link rel="stylesheet" href="/css/formalize.css" />
+  <link href="/css/style.css" rel="stylesheet" type="text/css" />
+  <link href="/css/syntax_github.css" rel="stylesheet" type="text/css" />
+  <link href="/css/formalize.css" rel="stylesheet" type="text/css" />
+  <link href="http://fonts.googleapis.com/css?family=Inconsolata|Droid+Sans" rel="stylesheet" type="text/css" />
   <script src="/js/modernizr-1.7.min.js"></script>
   <script src="/js/jquery-1.6.4.min.js"></script>
   <script src="/js/jquery.formalize-1.1.min.js"></script>
@@ -31,7 +32,10 @@
           <span class="description">{{description}}</span>
         </li>
       </ul>
-      {{/gists}}
+      {{/recent_gists}}
+      <a href="/gist/all">
+        <input type="button" value="All gists &rarr;" />
+      </a>                                        
     </div>
     
     <!--

@@ -1,0 +1,21 @@
+<a href="/">
+  <input type="button" value="Create gist &rarr;" />
+</a>                                                
+
+<div id="all_gists">
+  <h1>All</h1>
+  <table id="all_list">
+  <tr>
+    <th>Id</th>
+    <th>Author</th>
+    <th>Description</th>
+  </tr>
+  {{#gists}}
+  <tr>
+    <td><a href="/gist/{{id}}">{{id}}</a></td>
+    <td>{{author}}</td>
+    <td><span class="description">{{description}}</span></td>
+  </tr>
+  {{/gists}}
+  </table>
+</div>
