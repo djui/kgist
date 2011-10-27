@@ -57,9 +57,9 @@ handle('GET', ["gist", "all"], Req) ->
 %% @doc Show gist.
 handle('GET', ["gist", Id], Req) ->
   ContFun = fun(Gist0, CReq) ->
+                RelDate = kgist_gist:rel_expiry_date(Gist0),
 		Gist    = kgist_gist:defaults(Gist0),
                 Recents = kgist_view:to_list(kgist_db:recents(10)),
-                RelDate = kgist_gist:rel_expiry_date(Gist),
                 ViewCtx = [ {page_title,       fmt("Gist ~b", [Gist#gist.id])}
                           , {recent_gists,     Recents                   }
                           , {gist_author,      Gist#gist.author          }
