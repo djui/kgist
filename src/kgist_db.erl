@@ -104,7 +104,8 @@ get_since(SinceTS) ->
   Guards    = [{'>=', '$1', SinceTS}],
   Result    = ['$_'],
   Res = mnesia:dirty_select(?GIST_TABLE, [{MatchHead, Guards, Result}]),
-  Res.
+  lists:map(fun kgist_gist:defaults/1, 
+	    lists:reverse(lists:keysort(#gist.creation_time, Res))).
 
 migrate() ->
   {ok, DBDir} = application:get_env(mnesia, dir),
@@ -141,7 +142,10 @@ recents(N) ->
   Guards    = [],
   Result    = ['$_'],
   Res = mnesia:dirty_select(?GIST_TABLE, [{MatchHead, Guards, Result}]),
-  lists:reverse(lists:sublist(Res, N)).
+  lists:map(fun kgist_gist:defaults/1, 
+	    lists:reverse(
+	      lists:sublist(
+		lists:keysort(#gist.creation_time, Res), N))).
 
 %%% Internals ------------------------------------------------------------------
 migrate_schema(DBDir) when is_list(DBDir) ->

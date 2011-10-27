@@ -2,6 +2,7 @@
 
 %%% Exports ====================================================================
 -export([ convert_id/1
+	, defaults/1
         , expired/1
         , expires/1
         , random_id/0
@@ -16,7 +17,6 @@
                         , unix_ts/1
                         , unix_ts_to_datetime/1
                         ]).
-
 -import(tulib_erlang,   [ len/1 ]).
 -import(tulib_string,   [ fmt/2
                         , s/1
@@ -64,13 +64,13 @@ sanitize(Vals) ->
   File0    = proplists:get_value("filename",    Vals, ""),
   Lang0    = proplists:get_value("language",    Vals, ""),
   %% Translate
-  Author   = conv([{non_empty, "anonymous"}, {max, 32}], Author0),
+  Author   = conv([{set, "anonymous"}, {max, 32}], Author0),
   Code     = conv([{max, 1048576}], Code0), %% 1 MB
   Expires  = conv([{in, ["1h","1d","1w","1m","1y"]}], Expires0),
   Desc     = conv([{max, 1024}], Desc0),
   Lang     = conv([{fun pygments:lang_exists/1, "Text only"}], Lang0),
   DefFile  = fmt("gistfile~s", [pygments:lang_ext(Lang)]),
-  File     = conv([{non_empty, DefFile}], File0),
+  File     = conv([{set, DefFile}], File0),
   Irc      = conv([{min, 2}, fun(["#"|_]) -> true; (_) -> false end], Irc0),
   HlCode   = pygments:pygmentize(Lang, Code),
   %% Load
@@ -86,6 +86,16 @@ sanitize(Vals) ->
               , code_highlighted = HlCode
               },
   {ok, Gist}.
+
+defaults(Gist=#gist{description=""}) when is_record(Gist, gist) ->
+    defaults(Gist#gist{description="-"});
+defaults(Gist=#gist{creation_time=CT0}) when is_record(Gist, gist) andalso
+					    is_integer(CT0) ->
+    {{Y,M,D},{H,I,S}} = unix_ts_to_datetime(CT0),
+    CT = io_lib:format("~4..0B-~2..0B-~2..0B ~2..0B:~2..0B:~2..0B",
+		       [Y,M,D,H,I,S]),
+    defaults(Gist#gist{creation_time=CT});
+defaults(Gist) when is_record(Gist, gist) -> Gist.
 
 to_dict(Gist) when is_record(Gist, gist) ->
   dict:from_list(to_plist(Gist)).

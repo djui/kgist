@@ -77,9 +77,9 @@ handle_call({pygmentize, Language, CodeText}, _From,
   Args    = orddict:fold(fun(_Key, Value, Acc) -> Value++Acc end, [], Flags),
   Cmd     = string:join([Cmd0|Args], " "),
   {ok, S} = stdinout:start_link(Cmd),
-  [Res]   = stdinout:send(S, CodeText),
+  Res     = stdinout:send(S, CodeText),
   true    = stdinout:shutdown(S),
-  HLCode  = binary_to_list(Res),
+  HLCode  = lists:flatmap(fun erlang:binary_to_list/1, Res),
   {reply, HLCode, State};
 handle_call({lang_alias, Language}, _From, State=#state{languages=Languages}) ->
   Alias = atom_to_list(lang(alias, Language, Languages)),

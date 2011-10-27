@@ -55,8 +55,8 @@ label { margin-right: 5px; color: #909090; }
 #all_list { }
 #all_list th { padding: 1px 5px; text-align: left }
 #all_list td { padding: 1px 5px }
-#recent_gists { float: right; margin: 0 30px 0 0; width: 250px; }
-#recent_list { list-style-type: none; padding: 0px; }
+#recent_gists { float: right; margin: 0 30px 15px 0; width: 250px; }
+#recent_list { list-style-type: none; padding: 0 }
 .description { color: #999999; }
 
 .flash_error { min-width: 100px; width: 200px; margin: 20px auto; padding: 10px; text-align: center; color: #CC0000; font-weight: bold; background-color: #FFEEEE; border: 1px #FF0000 solid; border-radius: 3px; }
