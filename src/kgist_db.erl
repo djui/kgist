@@ -143,9 +143,9 @@ recents(N) ->
   Result    = ['$_'],
   Res = mnesia:dirty_select(?GIST_TABLE, [{MatchHead, Guards, Result}]),
   lists:map(fun kgist_gist:defaults/1, 
-	    lists:reverse(
-	      lists:sublist(
-		lists:keysort(#gist.creation_time, Res), N))).
+	    lists:sublist(
+	      lists:reverse(
+		lists:keysort(#gist.creation_time, Res)), N)).
 
 %%% Internals ------------------------------------------------------------------
 migrate_schema(DBDir) when is_list(DBDir) ->
